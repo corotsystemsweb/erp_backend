@@ -343,8 +343,18 @@ CREATE TABLE mst_subject (
     subject_id SERIAL PRIMARY KEY,
     school_id int not null,
     subject_name VARCHAR(255) DEFAULT NULL,
+	subject_code VARCHAR(255) DEFAULT NULL,
+	subject_category VARCHAR(255) DEFAULT NULL,
+	weekly_hours DOUBLE PRECISION DEFAULT NULL,
+	subject_description VARCHAR(255) DEFAULT NULL,
+	has_practical_exam BOOLEAN DEFAULT FALSE,
+	elective_course BOOLEAN DEFAULT FALSE,
+    allow_last_enrollment BOOLEAN DEFAULT FALSE,
+    auto_grading BOOLEAN DEFAULT FALSE,
+    grade_weightage JSONB DEFAULT '{}'::jsonb,
     CONSTRAINT unique_subject UNIQUE(school_id, subject_name)
 );
+
 /* script for master_sequence_controller*/
 CREATE TABLE master_sequence_controller(
      id serial PRIMARY KEY,
@@ -1680,8 +1690,17 @@ BEGIN
 -- Create the subject table with auto-insertion of subjects and hardcoded school_id=1
      ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.mst_subject (
       subject_id SERIAL PRIMARY KEY,
-      school_id INT NOT NULL DEFAULT 1,
+      school_id int not null,
       subject_name VARCHAR(255) DEFAULT NULL,
+      subject_code VARCHAR(255) DEFAULT NULL,
+      subject_category VARCHAR(255) DEFAULT NULL,
+      weekly_hours DOUBLE PRECISION DEFAULT NULL,
+      subject_description VARCHAR(255) DEFAULT NULL,
+      has_practical_exam BOOLEAN DEFAULT FALSE,
+      elective_course BOOLEAN DEFAULT FALSE,
+      allow_last_enrollment BOOLEAN DEFAULT FALSE,
+      auto_grading BOOLEAN DEFAULT FALSE,
+      grade_weightage JSONB DEFAULT ''{}''::jsonb,
       CONSTRAINT unique_subject_' || quote_ident(schema_name) || '_subject UNIQUE (school_id, subject_name)
       )';
       EXECUTE ddl_statement;

@@ -6,18 +6,25 @@ import com.sms.dao.SubjectDao;
 import com.sms.model.SubjectDetails;
 import com.sms.util.DatabaseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
 @Repository
 public class SubjectDaoImpl implements SubjectDao {
+    @Value("${subject.syllabus.local.path}")
+    private String SYLLABUS_FOLDER_PATH;
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -51,7 +58,90 @@ public class SubjectDaoImpl implements SubjectDao {
     @developer Sukhendu Bhowmik
     */
 
-   @Override
+
+    @Override
+    public boolean uploadSyllabus(MultipartFile file, String schoolCode, int subjectId) throws Exception {
+
+        long maxSize = 10 * 1024 * 1024;
+
+        if(file.getSize() > maxSize){
+            throw new RuntimeException("File size exceeds 10MB limit");
+        }
+
+        String originalName = file.getOriginalFilename();
+
+        if(originalName == null || !originalName.contains(".")){
+            throw new RuntimeException("Invalid file name");
+        }
+
+        String extension = originalName.substring(originalName.lastIndexOf(".") + 1).toLowerCase();
+
+        if (!extension.equals("pdf") && !extension.equals("doc") && !extension.equals("docx")
+                && !extension.equals("jpeg") && !extension.equals("jpg") && !extension.equals("png")) {
+
+            throw new RuntimeException("Only PDF, Word, JPG, JPEG, and PNG files allowed");
+        }
+
+        String fileName = subjectId + "." + extension;
+
+        File directory = new File(SYLLABUS_FOLDER_PATH + schoolCode);
+
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        // delete old syllabus files
+        File[] oldFiles = directory.listFiles((dir, name) -> name.startsWith(subjectId + "."));
+
+        if(oldFiles != null){
+            for(File oldFile : oldFiles){
+                oldFile.delete();
+            }
+        }
+
+        String path = directory.getAbsolutePath() + File.separator + fileName;
+
+        file.transferTo(new File(path));
+
+        return true;
+    }
+
+    @Override
+    public SubjectDetails getSyllabus(String schoolCode, int subjectId) throws Exception {
+
+        File folder = new File(SYLLABUS_FOLDER_PATH + schoolCode);
+
+        if (!folder.exists()) {
+            return null;
+        }
+
+        File[] files = folder.listFiles();
+
+        if(files == null){
+            return null;
+        }
+
+        for (File file : files) {
+
+            if (file.getName().startsWith(subjectId + ".")) {
+
+                byte[] fileBytes = Files.readAllBytes(file.toPath());
+
+                String base64File = Base64.getEncoder().encodeToString(fileBytes);
+
+                SubjectDetails subjectDetails = new SubjectDetails();
+
+                subjectDetails.setSyllabus(base64File);
+                subjectDetails.setSyllabusFileName(file.getName());
+
+                return subjectDetails;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
    public SubjectDetails addSubject(SubjectDetails subjectDetails, String schoolCode) throws Exception {
        int nextAvailableId = findNextAvailableId(schoolCode);
        subjectDetails.setSubjectId(nextAvailableId);

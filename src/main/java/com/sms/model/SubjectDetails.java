@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SubjectDetails {
     private int subjectId;
     private String subjectName;
@@ -17,6 +17,8 @@ public class SubjectDetails {
     private boolean allowLastEnrollment;
     private boolean autoGrading;
     private Map<String, Integer> gradeWeightage;
+    private String syllabus;
+    private String syllabusFileName;
 
     @JsonProperty("subject_name")
     private String subject_name;
@@ -192,5 +194,21 @@ public class SubjectDetails {
 
     public void setGradeWeightage(Map<String, Integer> gradeWeightage) {
         this.gradeWeightage = gradeWeightage;
+    }
+
+    public String getSyllabus() {
+        return syllabus;
+    }
+
+    public void setSyllabus(String syllabus) {
+        this.syllabus = syllabus;
+    }
+
+    public String getSyllabusFileName() {
+        return syllabusFileName;
+    }
+
+    public void setSyllabusFileName(String syllabusFileName) {
+        this.syllabusFileName = syllabusFileName;
     }
 }
