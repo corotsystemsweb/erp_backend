@@ -1,12 +1,22 @@
 package com.sms.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Map;
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class SubjectDetails {
     private int subjectId;
-
-
     private String subjectName;
+    private String subjectCode;
+    private String subjectCategory;
+    private Double weeklyHours;
+    private String subjectDescription;
+    private boolean hasPracticalExam;
+    private boolean electiveCourse;
+    private boolean allowLastEnrollment;
+    private boolean autoGrading;
+    private Map<String, Integer> gradeWeightage;
 
     @JsonProperty("subject_name")
     private String subject_name;
@@ -110,5 +120,77 @@ public class SubjectDetails {
 
     public void setSubject_name(String subject_name) {
         this.subject_name = subject_name;
+    }
+
+    public String getSubjectCode() {
+        return subjectCode;
+    }
+
+    public void setSubjectCode(String subjectCode) {
+        this.subjectCode = subjectCode;
+    }
+
+    public String getSubjectCategory() {
+        return subjectCategory;
+    }
+
+    public void setSubjectCategory(String subjectCategory) {
+        this.subjectCategory = subjectCategory;
+    }
+
+    public Double getWeeklyHours() {
+        return weeklyHours;
+    }
+
+    public void setWeeklyHours(Double weeklyHours) {
+        this.weeklyHours = weeklyHours;
+    }
+
+    public String getSubjectDescription() {
+        return subjectDescription;
+    }
+
+    public void setSubjectDescription(String subjectDescription) {
+        this.subjectDescription = subjectDescription;
+    }
+
+    public boolean isHasPracticalExam() {
+        return hasPracticalExam;
+    }
+
+    public void setHasPracticalExam(boolean hasPracticalExam) {
+        this.hasPracticalExam = hasPracticalExam;
+    }
+
+    public boolean isElectiveCourse() {
+        return electiveCourse;
+    }
+
+    public void setElectiveCourse(boolean electiveCourse) {
+        this.electiveCourse = electiveCourse;
+    }
+
+    public boolean isAllowLastEnrollment() {
+        return allowLastEnrollment;
+    }
+
+    public void setAllowLastEnrollment(boolean allowLastEnrollment) {
+        this.allowLastEnrollment = allowLastEnrollment;
+    }
+
+    public boolean isAutoGrading() {
+        return autoGrading;
+    }
+
+    public void setAutoGrading(boolean autoGrading) {
+        this.autoGrading = autoGrading;
+    }
+
+    public Map<String, Integer> getGradeWeightage() {
+        return gradeWeightage;
+    }
+
+    public void setGradeWeightage(Map<String, Integer> gradeWeightage) {
+        this.gradeWeightage = gradeWeightage;
     }
 }

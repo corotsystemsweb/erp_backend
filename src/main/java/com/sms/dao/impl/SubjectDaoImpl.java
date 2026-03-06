@@ -1,24 +1,18 @@
 package com.sms.dao.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sms.dao.SubjectDao;
 import com.sms.model.SubjectDetails;
 import com.sms.util.DatabaseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +24,9 @@ public class SubjectDaoImpl implements SubjectDao {
     public SubjectDaoImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
    private int findNextAvailableId(String schoolCode) {
        String dbsql = "SELECT COALESCE(MAX(subject_id), 0) + 1 AS subject_id FROM mst_subject";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
@@ -58,13 +55,24 @@ public class SubjectDaoImpl implements SubjectDao {
    public SubjectDetails addSubject(SubjectDetails subjectDetails, String schoolCode) throws Exception {
        int nextAvailableId = findNextAvailableId(schoolCode);
        subjectDetails.setSubjectId(nextAvailableId);
-       String sql = "insert into mst_subject (subject_id,school_id,subject_name) values(?,?,?)";
+       String sql = "insert into mst_subject (subject_id,school_id,subject_name,subject_code,subject_category,weekly_hours,subject_description,has_practical_exam,elective_course,allow_last_enrollment,auto_grading,grade_weightage) values(?,?,?,?,?,?,?,?,?,?,?,?::jsonb)";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
        try{
+           String gradeWeightageJson = objectMapper.writeValueAsString(subjectDetails.getGradeWeightage());
            jdbcTemplate.update(sql,
                    subjectDetails.getSubjectId(),
                    subjectDetails.getSchoolId(),
-                   subjectDetails.getSubjectName());
+                   subjectDetails.getSubjectName(),
+                   subjectDetails.getSubjectCode(),
+                   subjectDetails.getSubjectCategory(),
+                   subjectDetails.getWeeklyHours(),
+                   subjectDetails.getSubjectDescription(),
+                   subjectDetails.isHasPracticalExam(),
+                   subjectDetails.isElectiveCourse(),
+                   subjectDetails.isAllowLastEnrollment(),
+                   subjectDetails.isAutoGrading(),
+                   gradeWeightageJson
+           );
        }catch(Exception e){
            //e.printStackTrace();
            return null;
@@ -83,7 +91,7 @@ public class SubjectDaoImpl implements SubjectDao {
     */
     @Override
     public SubjectDetails getSubjectDetailsById(int subjectId,String schoolCode) throws Exception {
-        String sql = "select distinct subject_id,school_id, subject_name from mst_subject where subject_id = ?";
+        String sql = "select distinct subject_id,school_id, subject_name, subject_code, subject_category, weekly_hours, subject_description, has_practical_exam, elective_course, allow_last_enrollment, auto_grading, grade_weightage from mst_subject where subject_id = ?";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         SubjectDetails subjectDetails = null;
         try{
@@ -94,6 +102,26 @@ public class SubjectDaoImpl implements SubjectDao {
                     sd.setSubjectId(rs.getInt("subject_id"));
                     sd.setSchoolId(rs.getInt("school_id"));
                     sd.setSubjectName(rs.getString("subject_name"));
+                    sd.setSubjectCode(rs.getString("subject_code"));
+                    sd.setSubjectCategory(rs.getString("subject_category"));
+                    sd.setWeeklyHours(rs.getDouble("weekly_hours"));
+                    sd.setSubjectDescription(rs.getString("subject_description"));
+                    sd.setHasPracticalExam(rs.getBoolean("has_practical_exam"));
+                    sd.setElectiveCourse(rs.getBoolean("elective_course"));
+                    sd.setAllowLastEnrollment(rs.getBoolean("allow_last_enrollment"));
+                    sd.setAutoGrading(rs.getBoolean("auto_grading"));
+                    String gradeWeightageJson = rs.getString("grade_weightage");
+
+                    if (gradeWeightageJson != null) {
+                        try {
+                            Map<String, Integer> map = objectMapper.readValue(gradeWeightageJson, new TypeReference<Map<String, Integer>>() {});
+                            sd.setGradeWeightage(map);
+
+                        } catch (Exception e) {
+                            throw new SQLException("Error parsing grade_weightage JSON", e);
+                        }
+                    }
+
                     return sd;
                 }
             });
@@ -113,7 +141,7 @@ public class SubjectDaoImpl implements SubjectDao {
 
     @Override
     public List<SubjectDetails> getAllSubjectDetails(String schoolCode) throws Exception {
-        String sql = "select distinct subject_id,school_id, subject_name from mst_subject order by subject_id asc";
+        String sql = "select distinct subject_id,school_id, subject_name, subject_code, subject_category, weekly_hours, subject_description, has_practical_exam, elective_course, allow_last_enrollment, auto_grading, grade_weightage from mst_subject order by subject_id asc";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<SubjectDetails> subjectDetails = null;
         try{
@@ -124,6 +152,26 @@ public class SubjectDaoImpl implements SubjectDao {
                     sd.setSubjectId(rs.getInt("subject_id"));
                     sd.setSchoolId(rs.getInt("school_id"));
                     sd.setSubjectName(rs.getString("subject_name"));
+                    sd.setSubjectCode(rs.getString("subject_code"));
+                    sd.setSubjectCategory(rs.getString("subject_category"));
+                    sd.setWeeklyHours(rs.getDouble("weekly_hours"));
+                    sd.setSubjectDescription(rs.getString("subject_description"));
+                    sd.setHasPracticalExam(rs.getBoolean("has_practical_exam"));
+                    sd.setElectiveCourse(rs.getBoolean("elective_course"));
+                    sd.setAllowLastEnrollment(rs.getBoolean("allow_last_enrollment"));
+                    sd.setAutoGrading(rs.getBoolean("auto_grading"));
+                    String gradeWeightageJson = rs.getString("grade_weightage");
+
+                    if (gradeWeightageJson != null) {
+                        try {
+                            Map<String, Integer> map = objectMapper.readValue(gradeWeightageJson, new TypeReference<Map<String, Integer>>() {});
+                            sd.setGradeWeightage(map);
+
+                        } catch (Exception e) {
+                            throw new SQLException("Error parsing grade_weightage JSON", e);
+                        }
+                    }
+
                     return sd;
                 }
             });
@@ -162,13 +210,27 @@ public class SubjectDaoImpl implements SubjectDao {
             return null;
         }
         // If no conflict, proceed with the update
-        String sql = "UPDATE mst_subject SET school_id = ?, subject_name = ? WHERE subject_id = ?";
+        String sql = "UPDATE mst_subject SET school_id = ?, subject_name = ?, subject_code=?, subject_category=?, weekly_hours=?, subject_description=?, has_practical_exam=?, elective_course=?, allow_last_enrollment=?, auto_grading=?, grade_weightage=?::jsonb WHERE subject_id = ?";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
+            String gradeWeightageJson = null;
+            if(subjectDetails.getGradeWeightage() != null){
+                gradeWeightageJson = objectMapper.writeValueAsString(subjectDetails.getGradeWeightage());
+            }
             int rowEffected = jdbcTemplate.update(sql,
                     subjectDetails.getSchoolId(),
                     subjectDetails.getSubjectName(),
-                    subjectId);
+                    subjectDetails.getSubjectCode(),
+                    subjectDetails.getSubjectCategory(),
+                    subjectDetails.getWeeklyHours(),
+                    subjectDetails.getSubjectDescription(),
+                    subjectDetails.isHasPracticalExam(),
+                    subjectDetails.isElectiveCourse(),
+                    subjectDetails.isAllowLastEnrollment(),
+                    subjectDetails.isAutoGrading(),
+                    gradeWeightageJson,
+                    subjectId
+            );
 
             if (rowEffected > 0) {
                 return subjectDetails;
