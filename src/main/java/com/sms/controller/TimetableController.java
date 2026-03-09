@@ -80,4 +80,17 @@ public class TimetableController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/staff/{schoolCode}")
+    public ResponseEntity<?> getAllTimeTableBasedOnStaffId(@RequestParam int sessionId, @RequestParam int staffId, @PathVariable String schoolCode) {
+        try {
+            List<TimetableDetails> timetable = timetableService.getAllTimeTableBasedOnStaffId(sessionId, staffId, schoolCode);
+            if(timetable == null || timetable.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No timetable found for this teacher.");
+            }
+            return ResponseEntity.ok(timetable);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching timetable");
+        }
+    }
 }

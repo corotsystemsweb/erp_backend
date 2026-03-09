@@ -41,4 +41,10 @@ public class TimetableServiceImpl implements TimetableService {
     public int[] deleteTimetableBulk(List<Integer> timetableIds, String schoolCode) throws SQLException {
         return createTimetableDao.deleteTimetableBulk(timetableIds,schoolCode);
     }
+
+    @Override
+    public List<TimetableDetails> getAllTimeTableBasedOnStaffId(int sessionId, Integer staffId, String schoolCode) throws Exception {
+        return createTimetableDao.getAllTimeTableBasedOnStaffId(sessionId, staffId, schoolCode);
+    }
+
 }
