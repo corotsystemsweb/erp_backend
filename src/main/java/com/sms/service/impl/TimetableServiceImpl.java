@@ -47,4 +47,10 @@ public class TimetableServiceImpl implements TimetableService {
         return createTimetableDao.getAllTimeTableBasedOnStaffId(sessionId, staffId, schoolCode);
     }
 
+    @Override
+    public List<TimetableDetails> getAllTimeTableSchedule(int sessionId, String schoolCode) throws Exception {
+        return createTimetableDao.getAllTimeTableSchedule(sessionId, schoolCode);
+    }
+
+
 }

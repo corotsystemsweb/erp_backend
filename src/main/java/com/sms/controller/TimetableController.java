@@ -93,4 +93,17 @@ public class TimetableController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching timetable");
         }
     }
+
+    @GetMapping("/all/schedule")
+    public ResponseEntity<Object> getAllTimeTableSchedule(@RequestParam int sessionId, @RequestParam String schoolCode){
+        try{
+            List<TimetableDetails> timetableDetailsList = timetableService.getAllTimeTableSchedule(sessionId, schoolCode);
+            if(timetableDetailsList == null || timetableDetailsList.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No timetable schedule is found. ");
+            }
+            return ResponseEntity.ok(timetableDetailsList);
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching timetable schedule");
+        }
+    }
 }

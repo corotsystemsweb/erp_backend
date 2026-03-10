@@ -298,5 +298,112 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
         return timetableDetails;
     }
 
+    @Override
+    public List<TimetableDetails> getAllTimeTableSchedule(int sessionId, String schoolCode) throws Exception {
+        String sql = """
+                SELECT
+                    c.class_id,
+                    s.section_id,
+                    sess.session_id,
+                    sess.academic_session,
+                
+                    c.class_name,
+                    COALESCE(s.section_name,'No Section') AS section_name,
+                
+                    cta.staff_id,
+                
+                    CASE
+                        WHEN cta.staff_id IS NULL
+                        THEN 'Class Teacher Not Assigned'
+                        ELSE CONCAT(st.first_name,' ',st.last_name)
+                    END AS class_teacher,
+                
+                    COUNT(DISTINCT t.timetable_id) AS total_periods,
+                
+                    COUNT(DISTINCT t.period_number) AS total_periods_per_day,
+                
+                    COUNT(DISTINCT spd.student_id) AS total_students
+                
+                FROM mst_class c
+                
+                LEFT JOIN class_and_section cs
+                       ON cs.class_id = c.class_id
+                      AND cs.school_id = c.school_id
+                
+                LEFT JOIN mst_section s
+                       ON s.section_id = cs.section_id
+                      AND s.school_id = cs.school_id
+                
+                LEFT JOIN session sess
+                       ON sess.school_id = c.school_id
+                      AND sess.session_id = ?
+                
+                LEFT JOIN class_teacher_allocation cta
+                       ON cta.class_id = cs.class_id
+                      AND cta.section_id = cs.section_id
+                      AND cta.session_id = sess.session_id
+                
+                LEFT JOIN staff st
+                       ON st.staff_id = cta.staff_id
+                
+                LEFT JOIN timetable t
+                       ON t.class_id = cs.class_id
+                      AND t.section_id = cs.section_id
+                      AND t.session_id = sess.session_id
+                
+                LEFT JOIN student_academic_details sad
+                       ON sad.student_class_id = cs.class_id
+                      AND sad.student_section_id = cs.section_id
+                      AND sad.session_id = sess.session_id
+                
+                LEFT JOIN student_personal_details spd
+                       ON spd.student_id = sad.student_id
+                      AND spd.validity_end_date >= NOW()
+                      AND spd.deleted IS NOT TRUE
+                
+                WHERE c.school_id = 1
+                
+                GROUP BY
+                    c.class_id,
+                    s.section_id,
+                    sess.session_id,
+                    sess.academic_session,
+                    c.class_name,
+                    s.section_name,
+                    cta.staff_id,
+                    st.first_name,
+                    st.last_name
+                
+                ORDER BY c.class_id, s.section_id;
+                """;
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        List<TimetableDetails> timetableDetails = null;
+        try{
+            timetableDetails = jdbcTemplate.query(sql, new Object[]{sessionId}, new RowMapper<TimetableDetails>() {
+                @Override
+                public TimetableDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    TimetableDetails td = new TimetableDetails();
+                    td.setClassId(rs.getInt("class_id"));
+                    td.setSectionId(rs.getInt("section_id"));
+                    td.setSessionId(rs.getInt("session_id"));
+                    td.setAcademicSession(rs.getString("academic_session"));
+                    td.setClassName(rs.getString("class_name"));
+                    td.setSectionName(rs.getString("section_name"));
+                    td.setStaffId(rs.getInt("staff_id"));
+                    td.setClassTeacher(rs.getString("class_teacher"));
+                    td.setTotalPeriods(rs.getInt("total_periods"));
+                    td.setTotalPeriodsPerDay(rs.getInt("total_periods_per_day"));
+                    td.setTotalStudents(rs.getInt("total_students"));
+                    return td;
+                }
+            });
+        } catch (Exception e){
+            throw new Exception("Error fetching subject details", e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+        return timetableDetails;
+    }
+
 
 }
