@@ -181,7 +181,48 @@ public class SubjectDaoImpl implements SubjectDao {
     */
     @Override
     public SubjectDetails getSubjectDetailsById(int subjectId,String schoolCode) throws Exception {
-        String sql = "select distinct subject_id,school_id, subject_name, subject_code, subject_category, weekly_hours, subject_description, has_practical_exam, elective_course, allow_last_enrollment, auto_grading, grade_weightage from mst_subject where subject_id = ?";
+        String sql = """
+                SELECT
+                    ms.subject_id,
+                    ms.school_id,
+                    ms.subject_name,
+                    ms.subject_code,
+                    ms.subject_category,
+                    ms.weekly_hours,
+                    ms.subject_description,
+                    ms.has_practical_exam,
+                    ms.elective_course,
+                    ms.allow_last_enrollment,
+                    ms.auto_grading,
+                    ms.grade_weightage,
+
+                    COUNT(DISTINCT csta.teacher_id) AS faculty,
+
+                    COUNT(DISTINCT (csta.class_id, csta.section_id))
+                        FILTER (WHERE csta.class_id IS NOT NULL) AS classes
+
+                FROM mst_subject ms
+
+                LEFT JOIN class_subject_teacher_allocation csta
+                    ON ms.subject_id = csta.subject_id
+                    AND ms.school_id = csta.school_id
+                where ms.subject_id = ?
+                GROUP BY
+                    ms.subject_id,
+                    ms.school_id,
+                    ms.subject_name,
+                    ms.subject_code,
+                    ms.subject_category,
+                    ms.weekly_hours,
+                    ms.subject_description,
+                    ms.has_practical_exam,
+                    ms.elective_course,
+                    ms.allow_last_enrollment,
+                    ms.auto_grading,
+                    ms.grade_weightage
+
+                ORDER BY ms.subject_id;
+                """;
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         SubjectDetails subjectDetails = null;
         try{
@@ -211,6 +252,8 @@ public class SubjectDaoImpl implements SubjectDao {
                             throw new SQLException("Error parsing grade_weightage JSON", e);
                         }
                     }
+                    sd.setFacultyCount(rs.getInt("faculty"));
+                    sd.setClassCount(rs.getInt("classes"));
 
                     return sd;
                 }
@@ -231,7 +274,48 @@ public class SubjectDaoImpl implements SubjectDao {
 
     @Override
     public List<SubjectDetails> getAllSubjectDetails(String schoolCode) throws Exception {
-        String sql = "select distinct subject_id,school_id, subject_name, subject_code, subject_category, weekly_hours, subject_description, has_practical_exam, elective_course, allow_last_enrollment, auto_grading, grade_weightage from mst_subject order by subject_id asc";
+        String sql = """
+                SELECT\s
+                    ms.subject_id,
+                    ms.school_id,
+                    ms.subject_name,
+                    ms.subject_code,
+                    ms.subject_category,
+                    ms.weekly_hours,
+                    ms.subject_description,
+                    ms.has_practical_exam,
+                    ms.elective_course,
+                    ms.allow_last_enrollment,
+                    ms.auto_grading,
+                    ms.grade_weightage,
+                
+                    COUNT(DISTINCT csta.teacher_id) AS faculty,
+                
+                    COUNT(DISTINCT (csta.class_id, csta.section_id))\s
+                        FILTER (WHERE csta.class_id IS NOT NULL) AS classes
+                
+                FROM mst_subject ms
+                
+                LEFT JOIN class_subject_teacher_allocation csta
+                    ON ms.subject_id = csta.subject_id
+                    AND ms.school_id = csta.school_id
+                
+                GROUP BY\s
+                    ms.subject_id,
+                    ms.school_id,
+                    ms.subject_name,
+                    ms.subject_code,
+                    ms.subject_category,
+                    ms.weekly_hours,
+                    ms.subject_description,
+                    ms.has_practical_exam,
+                    ms.elective_course,
+                    ms.allow_last_enrollment,
+                    ms.auto_grading,
+                    ms.grade_weightage
+                
+                ORDER BY ms.subject_id;
+                """;
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<SubjectDetails> subjectDetails = null;
         try{
@@ -261,6 +345,8 @@ public class SubjectDaoImpl implements SubjectDao {
                             throw new SQLException("Error parsing grade_weightage JSON", e);
                         }
                     }
+                    sd.setFacultyCount(rs.getInt("faculty"));
+                    sd.setClassCount(rs.getInt("classes"));
 
                     return sd;
                 }

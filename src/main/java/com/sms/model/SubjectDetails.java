@@ -19,6 +19,8 @@ public class SubjectDetails {
     private Map<String, Integer> gradeWeightage;
     private String syllabus;
     private String syllabusFileName;
+    private int facultyCount;
+    private int classCount;
 
     @JsonProperty("subject_name")
     private String subject_name;
@@ -210,5 +212,21 @@ public class SubjectDetails {
 
     public void setSyllabusFileName(String syllabusFileName) {
         this.syllabusFileName = syllabusFileName;
+    }
+
+    public int getFacultyCount() {
+        return facultyCount;
+    }
+
+    public void setFacultyCount(int facultyCount) {
+        this.facultyCount = facultyCount;
+    }
+
+    public int getClassCount() {
+        return classCount;
+    }
+
+    public void setClassCount(int classCount) {
+        this.classCount = classCount;
     }
 }
