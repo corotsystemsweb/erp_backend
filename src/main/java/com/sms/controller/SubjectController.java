@@ -110,4 +110,14 @@ public ResponseEntity<Object> addSubjectDetails(
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @PatchMapping("/subject/softDelete")
+    public ResponseEntity<?> softDeleteSubject(@RequestParam int subjectId, @RequestParam String schoolCode){
+        try {
+            String result = subjectService.softDeleteSubject(subjectId, schoolCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while deleting subject: " + e.getMessage());
+        }
+    }
 }

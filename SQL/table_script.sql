@@ -352,6 +352,7 @@ CREATE TABLE mst_subject (
     allow_last_enrollment BOOLEAN DEFAULT FALSE,
     auto_grading BOOLEAN DEFAULT FALSE,
     grade_weightage JSONB DEFAULT '{}'::jsonb,
+    status VARCHAR(50) DEFAULT NULL,
     CONSTRAINT unique_subject UNIQUE(school_id, subject_name)
 );
 
@@ -1701,6 +1702,7 @@ BEGIN
       allow_last_enrollment BOOLEAN DEFAULT FALSE,
       auto_grading BOOLEAN DEFAULT FALSE,
       grade_weightage JSONB DEFAULT ''{}''::jsonb,
+      status VARCHAR(50) DEFAULT NULL,
       CONSTRAINT unique_subject_' || quote_ident(schema_name) || '_subject UNIQUE (school_id, subject_name)
       )';
       EXECUTE ddl_statement;

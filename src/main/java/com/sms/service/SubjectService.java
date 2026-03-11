@@ -12,4 +12,5 @@ public interface SubjectService {
     public List<SubjectDetails> getAllSubjectDetails(String schoolCode) throws Exception;
     public SubjectDetails updateSubjectDetailsById(SubjectDetails subjectDetails, int subjectId,String schoolCode, MultipartFile file) throws Exception;
     public boolean deleteSubject(int subjectId, String schoolCode) throws Exception;
+    public String softDeleteSubject(int subjectId, String schoolCode) throws Exception;
 }

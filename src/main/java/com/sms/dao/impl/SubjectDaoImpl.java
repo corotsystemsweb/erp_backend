@@ -145,7 +145,7 @@ public class SubjectDaoImpl implements SubjectDao {
    public SubjectDetails addSubject(SubjectDetails subjectDetails, String schoolCode) throws Exception {
        int nextAvailableId = findNextAvailableId(schoolCode);
        subjectDetails.setSubjectId(nextAvailableId);
-       String sql = "insert into mst_subject (subject_id,school_id,subject_name,subject_code,subject_category,weekly_hours,subject_description,has_practical_exam,elective_course,allow_last_enrollment,auto_grading,grade_weightage) values(?,?,?,?,?,?,?,?,?,?,?,?::jsonb)";
+       String sql = "insert into mst_subject (subject_id,school_id,subject_name,subject_code,subject_category,weekly_hours,subject_description,has_practical_exam,elective_course,allow_last_enrollment,auto_grading,grade_weightage, status) values(?,?,?,?,?,?,?,?,?,?,?,?::jsonb,?)";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
        try{
            String gradeWeightageJson = objectMapper.writeValueAsString(subjectDetails.getGradeWeightage());
@@ -161,7 +161,8 @@ public class SubjectDaoImpl implements SubjectDao {
                    subjectDetails.isElectiveCourse(),
                    subjectDetails.isAllowLastEnrollment(),
                    subjectDetails.isAutoGrading(),
-                   gradeWeightageJson
+                   gradeWeightageJson,
+                   subjectDetails.getStatus()
            );
        }catch(Exception e){
            //e.printStackTrace();
@@ -195,6 +196,7 @@ public class SubjectDaoImpl implements SubjectDao {
                     ms.allow_last_enrollment,
                     ms.auto_grading,
                     ms.grade_weightage,
+                    ms.status,
 
                     COUNT(DISTINCT csta.teacher_id) AS faculty,
 
@@ -219,7 +221,8 @@ public class SubjectDaoImpl implements SubjectDao {
                     ms.elective_course,
                     ms.allow_last_enrollment,
                     ms.auto_grading,
-                    ms.grade_weightage
+                    ms.grade_weightage,
+                    ms.status
 
                 ORDER BY ms.subject_id;
                 """;
@@ -252,6 +255,7 @@ public class SubjectDaoImpl implements SubjectDao {
                             throw new SQLException("Error parsing grade_weightage JSON", e);
                         }
                     }
+                    sd.setStatus(rs.getString("status"));
                     sd.setFacultyCount(rs.getInt("faculty"));
                     sd.setClassCount(rs.getInt("classes"));
 
@@ -288,6 +292,7 @@ public class SubjectDaoImpl implements SubjectDao {
                     ms.allow_last_enrollment,
                     ms.auto_grading,
                     ms.grade_weightage,
+                    ms.status,
                 
                     COUNT(DISTINCT csta.teacher_id) AS faculty,
                 
@@ -312,7 +317,8 @@ public class SubjectDaoImpl implements SubjectDao {
                     ms.elective_course,
                     ms.allow_last_enrollment,
                     ms.auto_grading,
-                    ms.grade_weightage
+                    ms.grade_weightage,
+                    ms.status
                 
                 ORDER BY ms.subject_id;
                 """;
@@ -345,6 +351,7 @@ public class SubjectDaoImpl implements SubjectDao {
                             throw new SQLException("Error parsing grade_weightage JSON", e);
                         }
                     }
+                    sd.setStatus(rs.getString("status"));
                     sd.setFacultyCount(rs.getInt("faculty"));
                     sd.setClassCount(rs.getInt("classes"));
 
@@ -386,7 +393,7 @@ public class SubjectDaoImpl implements SubjectDao {
             return null;
         }
         // If no conflict, proceed with the update
-        String sql = "UPDATE mst_subject SET school_id = ?, subject_name = ?, subject_code=?, subject_category=?, weekly_hours=?, subject_description=?, has_practical_exam=?, elective_course=?, allow_last_enrollment=?, auto_grading=?, grade_weightage=?::jsonb WHERE subject_id = ?";
+        String sql = "UPDATE mst_subject SET school_id = ?, subject_name = ?, subject_code=?, subject_category=?, weekly_hours=?, subject_description=?, has_practical_exam=?, elective_course=?, allow_last_enrollment=?, auto_grading=?, grade_weightage=?::jsonb, status=? WHERE subject_id = ?";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             String gradeWeightageJson = null;
@@ -405,6 +412,7 @@ public class SubjectDaoImpl implements SubjectDao {
                     subjectDetails.isAllowLastEnrollment(),
                     subjectDetails.isAutoGrading(),
                     gradeWeightageJson,
+                    subjectDetails.getStatus(),
                     subjectId
             );
 
@@ -448,5 +456,23 @@ public class SubjectDaoImpl implements SubjectDao {
            DatabaseUtil.closeDataSource(jdbcTemplate);
        }
    }
+
+    @Override
+    public String softDeleteSubject(int subjectId, String schoolCode) throws Exception {
+        String sql = "UPDATE mst_subject SET status = 'Inactive' WHERE subject_id = ?";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            int rowEffected = jdbcTemplate.update(sql, subjectId);
+            if(rowEffected > 0){
+                return "Subject deleted successfully";
+            } else {
+                return "Subject is not deleted";
+            }
+        } catch (Exception e){
+            throw new Exception("Error while soft deleting subject", e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
 
 }

@@ -21,6 +21,7 @@ public class SubjectDetails {
     private String syllabusFileName;
     private int facultyCount;
     private int classCount;
+    private String status;
 
     @JsonProperty("subject_name")
     private String subject_name;
@@ -228,5 +229,13 @@ public class SubjectDetails {
 
     public void setClassCount(int classCount) {
         this.classCount = classCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
