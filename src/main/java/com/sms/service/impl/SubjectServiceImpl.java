@@ -116,4 +116,9 @@ public class SubjectServiceImpl implements SubjectService {
         return subjectDao.deleteSubject(subjectId,schoolCode);
     }
 
+    @Override
+    public String softDeleteSubject(int subjectId, String schoolCode) throws Exception {
+        return subjectDao.softDeleteSubject(subjectId, schoolCode);
+    }
+
 }
