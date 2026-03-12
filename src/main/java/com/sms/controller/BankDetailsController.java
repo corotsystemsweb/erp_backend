@@ -5,6 +5,7 @@ import com.sms.model.BankDetailsResponse;
 import com.sms.model.StudentDetails;
 import com.sms.model.StudentResponse;
 import com.sms.service.BankDetailsService;
+import com.sms.util.CipherUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,16 @@ public class BankDetailsController {
     public ResponseEntity<Object>addBankDetails(@RequestBody BankDetails bankDetails, @PathVariable String schoolCode) throws Exception{
         BankDetails result=null;
         try{
-            result=bankDetailsService.addBankDetails(bankDetails,schoolCode);
+            // Encrypt phone number before saving
+            if (bankDetails.getPhoneNumber() != null) {
+                bankDetails.setPhoneNumber(CipherUtils.getEncryptedString(bankDetails.getPhoneNumber()));
+            }
+            result = bankDetailsService.addBankDetails(bankDetails, schoolCode);
+
+            // Decrypt before sending response
+            if (result != null && result.getPhoneNumber() != null) {
+                result.setPhoneNumber(CipherUtils.getDecriyptedString(result.getPhoneNumber()));
+            }
             return new ResponseEntity<>(result, HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(result,HttpStatus.UNAUTHORIZED);
@@ -35,6 +45,15 @@ public class BankDetailsController {
         List<BankDetails> result = null;
         try {
             result = bankDetailsService.getAllStaffBankDetails(schoolCode);   // List of object
+            // Decrypt phone numbers
+            if (result != null) {
+                for (BankDetails bankDetails : result) {
+
+                    if (bankDetails.getPhoneNumber() != null) {
+                        bankDetails.setPhoneNumber(CipherUtils.getDecriyptedString(bankDetails.getPhoneNumber()));
+                    }
+                }
+            }
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -45,6 +64,12 @@ public class BankDetailsController {
         BankDetails result = null;
         try {
             result = bankDetailsService.getBankDetailsById(bdId,schoolCode);   // List of object
+            // Decrypt phone number
+            if (result != null && result.getPhoneNumber() != null) {
+                result.setPhoneNumber(
+                        CipherUtils.getDecriyptedString(result.getPhoneNumber())
+                );
+            }
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
