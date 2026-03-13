@@ -5,6 +5,7 @@ import com.sms.model.ClassSubjectAllocationDetails;
 import com.sms.model.ClassSubjectTeacherDetails;
 import com.sms.util.DatabaseUtil;
 import com.sms.util.DateUtil;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -29,7 +30,7 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
     }
     @Override
     public ClassSubjectTeacherDetails assignSubjectClassTeacher(ClassSubjectTeacherDetails classSubjectTeacherDetails, String schoolCode) throws Exception {
-        String sql = "insert into class_subject_teacher_allocation (school_id, session_id, class_id, section_id, subject_id, teacher_id) values(?,?,?,?,?,?)";
+        String sql = "insert into class_subject_teacher_allocation (school_id, session_id, class_id, section_id, subject_id, teacher_id, allocation_role, allocation_date, status) values(?,?,?,?,?,?,?,?,?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
             KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -41,6 +42,13 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                 ps.setInt(4, classSubjectTeacherDetails.getSectionId());
                 ps.setInt(5, classSubjectTeacherDetails.getSubjectId());
                 ps.setInt(6, classSubjectTeacherDetails.getTeacherId());
+                ps.setString(7, classSubjectTeacherDetails.getAllocationRole());
+                if (classSubjectTeacherDetails.getAllocationDate() != null) {
+                    ps.setDate(8, new java.sql.Date(classSubjectTeacherDetails.getAllocationDate().getTime()));
+                } else {
+                    ps.setNull(8, java.sql.Types.DATE);
+                }
+                ps.setString(9, classSubjectTeacherDetails.getStatus());
                 return ps;
             }, keyHolder);
             Map<String, Object> keys = keyHolder.getKeys();
@@ -48,9 +56,10 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                 int generatedKey = ((Number) keys.get("csta_id")).intValue();
                 classSubjectTeacherDetails.setCstaId(generatedKey);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        } catch (DuplicateKeyException e){
+            throw e;
+        }catch (Exception e) {
+            throw e;
         }finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
@@ -67,6 +76,9 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                 "csta.section_id, " +
                 "csta.subject_id, " +
                 "csta.teacher_id, " +
+                "csta.allocation_role, " +
+                "csta.allocation_date, " +
+                "csta.status, " +
                 "s.academic_session, " +
                 "cls.class_name, " +
                 "sec.section_name, " +
@@ -93,6 +105,9 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                     csta.setSectionId(rs.getInt("section_id"));
                     csta.setSubjectId(rs.getInt("subject_id"));
                     csta.setTeacherId(rs.getInt("teacher_id"));
+                    csta.setAllocationRole(rs.getString("allocation_role"));
+                    csta.setAllocationDate(rs.getDate("allocation_date"));
+                    csta.setStatus(rs.getString("status"));
                     csta.setAcademicSession(rs.getString("academic_session"));
                     csta.setClassName(rs.getString("class_name"));
                     csta.setSectionName(rs.getString("section_name"));
@@ -120,6 +135,9 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                 "csta.section_id, " +
                 "csta.subject_id, " +
                 "csta.teacher_id, " +
+                "csta.allocation_role, " +
+                "csta.allocation_date, " +
+                "csta.status, " +
                 "s.academic_session, " +
                 "cls.class_name, " +
                 "sec.section_name, " +
@@ -139,7 +157,6 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
             classSubjectTeacherDetails = jdbcTemplate.queryForObject(sql, new Object[]{cstaId}, new RowMapper<ClassSubjectTeacherDetails>() {
                 @Override
                 public ClassSubjectTeacherDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    ClassSubjectTeacherDetails csa = new ClassSubjectTeacherDetails();
                     ClassSubjectTeacherDetails csta = new ClassSubjectTeacherDetails();
                     csta.setCstaId(rs.getInt("csta_id"));
                     csta.setSessionId(rs.getInt("session_id"));
@@ -148,6 +165,9 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                     csta.setSectionId(rs.getInt("section_id"));
                     csta.setSubjectId(rs.getInt("subject_id"));
                     csta.setTeacherId(rs.getInt("teacher_id"));
+                    csta.setAllocationRole(rs.getString("allocation_role"));
+                    csta.setAllocationDate(rs.getDate("allocation_date"));
+                    csta.setStatus(rs.getString("status"));
                     csta.setAcademicSession(rs.getString("academic_session"));
                     csta.setClassName(rs.getString("class_name"));
                     csta.setSectionName(rs.getString("section_name"));
@@ -167,7 +187,7 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
    @Override
    public ClassSubjectTeacherDetails updateClassSubjectTeacher(ClassSubjectTeacherDetails classSubjectTeacherDetails, int cstaId, String schoolCode) throws Exception {
        String sql = "UPDATE class_subject_teacher_allocation " +
-               "SET school_id = ?, session_id = ?, class_id = ?, section_id = ?, subject_id = ?, teacher_id = ? " +
+               "SET school_id = ?, session_id = ?, class_id = ?, section_id = ?, subject_id = ?, teacher_id = ?, allocation_role = ?, allocation_date = ?, status = ? " +
                "WHERE csta_id = ?";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
        try{
@@ -178,6 +198,9 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
                    classSubjectTeacherDetails.getSectionId(),
                    classSubjectTeacherDetails.getSubjectId(),
                    classSubjectTeacherDetails.getTeacherId(),
+                   classSubjectTeacherDetails.getAllocationRole(),
+                   classSubjectTeacherDetails.getAllocationDate(),
+                   classSubjectTeacherDetails.getStatus(),
                    cstaId);
 
            if (rowEffected > 0) {
@@ -185,9 +208,10 @@ public class ClassSubjectTeacherDaoImpl implements ClassSubjectTeacherDao {
            } else {
                return null;
            }
+       } catch (DuplicateKeyException e){
+           throw e;
        }catch (Exception e){
-           e.printStackTrace();
-           return null;
+           throw e;
        }finally {
            DatabaseUtil.closeDataSource(jdbcTemplate);
        }

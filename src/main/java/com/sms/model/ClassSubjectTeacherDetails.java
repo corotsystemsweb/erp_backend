@@ -1,5 +1,7 @@
 package com.sms.model;
 
+import java.util.Date;
+
 public class ClassSubjectTeacherDetails {
     private int cstaId;
     private int schoolId;
@@ -13,6 +15,9 @@ public class ClassSubjectTeacherDetails {
     private String sectionName;
     private String subjectName;
     private String teacherName;
+    private String allocationRole;
+    private Date allocationDate;
+    private String status;
 
     public int getCstaId() {
         return cstaId;
@@ -108,5 +113,29 @@ public class ClassSubjectTeacherDetails {
 
     public void setTeacherName(String teacherName) {
         this.teacherName = teacherName;
+    }
+
+    public String getAllocationRole() {
+        return allocationRole;
+    }
+
+    public void setAllocationRole(String allocationRole) {
+        this.allocationRole = allocationRole;
+    }
+
+    public Date getAllocationDate() {
+        return allocationDate;
+    }
+
+    public void setAllocationDate(Date allocationDate) {
+        this.allocationDate = allocationDate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
