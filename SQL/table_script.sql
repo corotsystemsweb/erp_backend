@@ -599,7 +599,12 @@ CREATE TABLE class_subject_teacher_allocation (
     class_id INT NOT NULL,
     section_id INT NOT NULL,
     subject_id INT NOT NULL,
-    teacher_id INT NOT NULL
+    teacher_id INT NOT NULL,
+    allocation_role VARCHAR(50) DEFAULT NULL,
+    allocation_date DATE DEFAULT NULL,
+    status VARCHAR(20) DEFAULT NULL,
+    CONSTRAINT unique_class_section_subject_allocation
+    UNIQUE (school_id, session_id, class_id, section_id, subject_id)
 );
 
 /*script for home_work*/
@@ -2006,7 +2011,12 @@ BEGIN
         class_id INT NOT NULL,
         section_id INT NOT NULL,
         subject_id INT NOT NULL,
-        teacher_id INT NOT NULL
+        teacher_id INT NOT NULL,
+        allocation_role VARCHAR(50) DEFAULT NULL,
+        allocation_date DATE DEFAULT NULL,
+        status VARCHAR(20) DEFAULT NULL,
+        CONSTRAINT unique_class_section_subject_allocation
+        UNIQUE (school_id, session_id, class_id, section_id, subject_id)
      )';
      EXECUTE ddl_statement;
     -- Create the home_work table
