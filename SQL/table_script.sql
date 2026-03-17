@@ -1338,27 +1338,55 @@ CREATE TABLE attendance_record (
     UNIQUE (attendance_session_id, student_id)
 );
 
-CREATE TABLE timetable (
-    timetable_id SERIAL PRIMARY KEY,
+--CREATE TABLE timetable (
+--    timetable_id SERIAL PRIMARY KEY,
+--    school_id INT NOT NULL,
+--    session_id INT NOT NULL,
+--    class_id INT NOT NULL,
+--    section_id INT NOT NULL,
+--    subject_id INT NOT NULL,
+--    teacher_id INT NOT NULL,
+--    day_of_week VARCHAR(10) NOT NULL, -- e.g., Monday, Tuesday, etc.
+--    period_number INT NOT NULL, -- e.g., 1 for first period, 2 for second period, etc.
+--    start_time TIME NOT NULL, -- Start time of the period
+--    end_time TIME NOT NULL, -- End time of the period
+--    room_number VARCHAR(50) DEFAULT NULL, -- Optional: Room number where the class is held
+--    CONSTRAINT fk_class_subject_allocation FOREIGN KEY (class_id, section_id, subject_id)
+--        REFERENCES class_subject_allocation(class_id, section_id, subject_id),
+--    CONSTRAINT fk_class_subject_teacher_allocation FOREIGN KEY (teacher_id)
+--        REFERENCES staff(staff_id),
+--    CONSTRAINT unique_timetable_entry UNIQUE (school_id, session_id, class_id, section_id, day_of_week, period_number)
+--);
+
+/* Script for timetable_master */
+CREATE TABLE timetable_master (
+    timetable_master_id SERIAL PRIMARY KEY,
     school_id INT NOT NULL,
     session_id INT NOT NULL,
     class_id INT NOT NULL,
     section_id INT NOT NULL,
-    subject_id INT NOT NULL,
-    teacher_id INT NOT NULL,
-    day_of_week VARCHAR(10) NOT NULL, -- e.g., Monday, Tuesday, etc.
-    period_number INT NOT NULL, -- e.g., 1 for first period, 2 for second period, etc.
-    start_time TIME NOT NULL, -- Start time of the period
-    end_time TIME NOT NULL, -- End time of the period
-    room_number VARCHAR(50) DEFAULT NULL, -- Optional: Room number where the class is held
-    CONSTRAINT fk_class_subject_allocation FOREIGN KEY (class_id, section_id, subject_id)
-        REFERENCES class_subject_allocation(class_id, section_id, subject_id),
-    CONSTRAINT fk_class_subject_teacher_allocation FOREIGN KEY (teacher_id)
-        REFERENCES staff(staff_id),
-    CONSTRAINT unique_timetable_entry UNIQUE (school_id, session_id, class_id, section_id, day_of_week, period_number)
+    day_of_week VARCHAR(10),
+    timetable_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    updated_by INT
 );
 
-
+/* Script for timetable */
+CREATE TABLE timetable (
+    timetable_id SERIAL PRIMARY KEY,
+    timetable_master_id INT NOT NULL,
+    period_number INT NULL,
+    period_name VARCHAR(50) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    subject_id INT,
+    teacher_id INT,
+    room_number VARCHAR(50) DEFAULT NULL,
+    is_break BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    updated_by INT
+);
 
 /*DDL for TABLES AND SEQUENCE*/
 CREATE OR REPLACE FUNCTION medhapro.exec_ddl(schema_name TEXT)
@@ -2709,22 +2737,49 @@ BEGIN
        )';
 
        -- 9. timetable
+--       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.timetable (
+--           timetable_id SERIAL PRIMARY KEY,
+--           school_id INT NOT NULL,
+--           session_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.session(session_id),
+--           class_id INT NOT NULL,
+--           section_id INT NOT NULL,
+--           subject_id INT NOT NULL,
+--           teacher_id INT NOT NULL,
+--           day_of_week VARCHAR(10) NOT NULL,
+--           period_number INT NOT NULL,
+--           start_time TIME NOT NULL,
+--           end_time TIME NOT NULL,
+--           room_number VARCHAR(50) DEFAULT NULL,
+--           CONSTRAINT fk_class_subject_allocation FOREIGN KEY (class_id, section_id, subject_id)
+--               REFERENCES ' || quote_ident(schema_name) || '.class_subject_allocation(class_id, section_id, subject_id),
+--           CONSTRAINT unique_timetable_entry UNIQUE (school_id, session_id, class_id, section_id, day_of_week, period_number)
+--       )';
+        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.timetable_master (
+            timetable_master_id SERIAL PRIMARY KEY,
+            school_id INT NOT NULL,
+            session_id INT NOT NULL,
+            class_id INT NOT NULL,
+            section_id INT NOT NULL,
+            day_of_week VARCHAR(10),
+            timetable_date DATE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            updated_by INT
+       )';
+
        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.timetable (
-           timetable_id SERIAL PRIMARY KEY,
-           school_id INT NOT NULL,
-           session_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.session(session_id),
-           class_id INT NOT NULL,
-           section_id INT NOT NULL,
-           subject_id INT NOT NULL,
-           teacher_id INT NOT NULL,
-           day_of_week VARCHAR(10) NOT NULL,
-           period_number INT NOT NULL,
-           start_time TIME NOT NULL,
-           end_time TIME NOT NULL,
-           room_number VARCHAR(50) DEFAULT NULL,
-           CONSTRAINT fk_class_subject_allocation FOREIGN KEY (class_id, section_id, subject_id)
-               REFERENCES ' || quote_ident(schema_name) || '.class_subject_allocation(class_id, section_id, subject_id),
-           CONSTRAINT unique_timetable_entry UNIQUE (school_id, session_id, class_id, section_id, day_of_week, period_number)
+            timetable_id SERIAL PRIMARY KEY,
+            timetable_master_id INT NOT NULL,
+            period_number INT NULL,
+            period_name VARCHAR(50) NOT NULL,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            subject_id INT,
+            teacher_id INT,
+            room_number VARCHAR(50) DEFAULT NULL,
+            is_break BOOLEAN DEFAULT FALSE,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            updated_by INT
        )';
 
     -- Return the schema name after execution

@@ -39,6 +39,16 @@ public class TimetableController {
         }
     }
 
+    @PostMapping("/create-weekly/{schoolCode}")
+    public ResponseEntity<?> createWeeklyTimetable(@RequestBody List<TimetableDetails> timetableDetails, @PathVariable String schoolCode){
+        try{
+            String response = timetableService.createTimetableBulkWithMaster(timetableDetails, schoolCode);
+            return ResponseEntity.ok(response);
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/class-section/{schoolCode}")
     public ResponseEntity<List<TimetableDetails>> getTimetable(
             @RequestParam int classId,

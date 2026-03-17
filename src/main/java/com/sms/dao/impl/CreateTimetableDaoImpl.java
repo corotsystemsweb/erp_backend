@@ -11,10 +11,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Time;
+import java.sql.*;
 import java.util.List;
 import java.util.Map;
 
@@ -93,6 +90,30 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
         }
         return timetables;
     }
+
+    @Override
+    public List<TimetableDetails> createTimetableBulkWithMaster(List<TimetableDetails> timeTables, int masterId, String schoolCode) throws Exception {
+        String sql = "INSERT INTO timetable (timetable_master_id, period_number, period_name, start_time, end_time, subject_id, teacher_id, room_number, is_break, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            jdbcTemplate.batchUpdate(sql, timeTables, timeTables.size(), (ps,t)->{
+                ps.setInt(1, masterId);
+                ps.setInt(2, t.getPeriodNumber());
+                ps.setString(3, t.getPeriodName());
+                ps.setTime(4, t.getStartTime());
+                ps.setTime(5, t.getEndTime());
+                ps.setInt(6, t.getSubjectId());
+                ps.setInt(7, t.getTeacherId());
+                ps.setString(8, t.getRoomNumber());
+                ps.setBoolean(9, t.isBreak());
+                ps.setInt(10, t.getUpdatedBy());
+            });
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+        return timeTables;
+    }
+
 
     @Override
     public List<TimetableDetails> getAllTimeTableBasedClassSection(int classId, int sectionId, int sessionId, String schoolCode) throws Exception {

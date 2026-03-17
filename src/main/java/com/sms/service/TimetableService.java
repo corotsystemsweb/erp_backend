@@ -8,6 +8,7 @@ import java.util.List;
 public interface TimetableService {
     public TimetableDetails addTimetableEntry(TimetableDetails timetable,String schoolCode) throws SQLException;
     List<TimetableDetails> addTimetableEntriesBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException;
+    String createTimetableBulkWithMaster(List<TimetableDetails> timeTables, String schoolCode) throws Exception;
     List<TimetableDetails> getAllTimeTableBasedClassSection(int classId,int sectionId,int sessionId, String schoolCode) throws Exception;
     public int[] updateTimetableBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException;
     public int[] deleteTimetableBulk(List<Integer> timetableIds, String schoolCode) throws SQLException;
