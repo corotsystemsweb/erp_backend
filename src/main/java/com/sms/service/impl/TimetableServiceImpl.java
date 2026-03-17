@@ -30,11 +30,6 @@ public class TimetableServiceImpl implements TimetableService {
         return createTimetableDao.createTimetable(timetable,schoolCode);
     }
 
-    @Override
-    public List<TimetableDetails> addTimetableEntriesBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException {
-        return createTimetableDao.createTimetableBulk(timetables, schoolCode);
-    }
-
     @Transactional
     @Override
     public String createTimetableBulkWithMaster(List<TimetableDetails> timeTables, String schoolCode) throws Exception {

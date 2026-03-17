@@ -7,7 +7,6 @@ import java.util.List;
 
 public interface CreateTimetableDao {
     public TimetableDetails createTimetable(TimetableDetails timetable,String schoolCode) throws SQLException;
-    List<TimetableDetails> createTimetableBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException;
     List<TimetableDetails> createTimetableBulkWithMaster(List<TimetableDetails> timeTables, int masterId, String schoolCode) throws Exception;
     List<TimetableDetails> getAllTimeTableBasedClassSection(int classId,int sectionId,int sessionId, String schoolCode) throws Exception;
     public int[] updateTimetableBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException;

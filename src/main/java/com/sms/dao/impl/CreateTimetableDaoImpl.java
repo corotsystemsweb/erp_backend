@@ -54,44 +54,6 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
         return timetable;
     }
     @Override
-    public List<TimetableDetails> createTimetableBulk(List<TimetableDetails> timetables, String schoolCode) throws SQLException {
-        String sql = "INSERT INTO timetable (school_id, session_id, class_id, section_id, subject_id, teacher_id, day_of_week, period_number, start_time, end_time, room_number) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
-        try {
-            for (TimetableDetails timetable : timetables) {
-                KeyHolder keyHolder = new GeneratedKeyHolder();
-                jdbcTemplate.update(connection -> {
-                    PreparedStatement ps = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
-                    ps.setInt(1, timetable.getSchoolId());
-                    ps.setInt(2, timetable.getSessionId());
-                    ps.setInt(3, timetable.getClassId());
-                    ps.setInt(4, timetable.getSectionId());
-                    ps.setInt(5, timetable.getSubjectId());
-                    ps.setInt(6, timetable.getTeacherId());
-                    ps.setString(7, timetable.getDayOfWeek());
-                    ps.setInt(8, timetable.getPeriodNumber());
-                    ps.setTime(9, timetable.getStartTime());
-                    ps.setTime(10, timetable.getEndTime());
-                    ps.setString(11, timetable.getRoomNumber());
-                    return ps;
-                }, keyHolder);
-                Map<String, Object> keys = keyHolder.getKeys();
-                if (keys != null && keys.containsKey("timetable_id")) {
-                    int generatedId = ((Number) keys.get("timetable_id")).intValue();
-                    timetable.setTimetableId(generatedId);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            DatabaseUtil.closeDataSource(jdbcTemplate);
-        }
-        return timetables;
-    }
-
-    @Override
     public List<TimetableDetails> createTimetableBulkWithMaster(List<TimetableDetails> timeTables, int masterId, String schoolCode) throws Exception {
         String sql = "INSERT INTO timetable (timetable_master_id, period_number, period_name, start_time, end_time, subject_id, teacher_id, room_number, is_break, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
