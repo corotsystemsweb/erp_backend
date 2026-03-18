@@ -538,9 +538,8 @@ CREATE TABLE fee_deposit_details (
     status VARCHAR(255) NOT NULL,
     comment  VARCHAR(255) DEFAULT NULL,
     additional_discount numeric(10) DEFAULT 0 NULL,
-    	additional_dc_id int4 NULL,
-    	additional_discount_reason varchar(255) NULL,
-    	CONSTRAINT fee_deposit_details_pkey PRIMARY KEY (fdd_id)
+    additional_dc_id int4 NULL,
+    additional_discount_reason varchar(255) NULL
 );
 CREATE TABLE transport_fee_due (
     tfdue_id SERIAL PRIMARY KEY,
@@ -1973,7 +1972,10 @@ BEGIN
         payment_received_by int not null,
         system_date_time TIMESTAMP not null,
         status VARCHAR(255) NOT NULL,
-        comment  VARCHAR(255) DEFAULT NULL
+        comment  VARCHAR(255) DEFAULT NULL,
+        additional_discount numeric(10) DEFAULT 0 NULL,
+        additional_dc_id int4 NULL,
+        additional_discount_reason varchar(255) NULL
      )';
      EXECUTE ddl_statement;
      -- Create the transport_fee_due table
