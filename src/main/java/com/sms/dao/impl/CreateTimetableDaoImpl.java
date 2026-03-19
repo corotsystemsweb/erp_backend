@@ -106,9 +106,9 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                     timetable_master tm ON t.timetable_master_id = tm.timetable_master_id
                 JOIN
                     session s ON tm.session_id = s.session_id
-                JOIN
+                LEFT JOIN
                     mst_subject sub ON t.subject_id = sub.subject_id
-                JOIN
+                LEFT JOIN
                     staff st ON t.teacher_id = st.staff_id
                 JOIN
                     mst_class c ON tm.class_id = c.class_id
