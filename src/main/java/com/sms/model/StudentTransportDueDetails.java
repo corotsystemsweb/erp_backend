@@ -15,6 +15,7 @@ import java.util.Date;
 public class StudentTransportDueDetails {
 
     private int tfdueId;
+    private Date lastPaidDate;
 
     // Default to BigDecimal.ZERO to avoid null issues
     private BigDecimal feeAmount = BigDecimal.ZERO;
