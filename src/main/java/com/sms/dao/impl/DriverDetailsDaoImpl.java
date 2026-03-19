@@ -149,8 +149,9 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
             "school_id, session_id, sd_id, first_name, last_name, dob, " +
             "contact_number, license_number, aadhar_number, joining_date, " +
             "employment_type, experience, address, city, state, zip_code, country, " +
-            "current_status, current_status_comment, updated_by, update_date_time" +
-            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            "current_status, current_status_comment, updated_by, update_date_time, " +
+            "blood_group, emergency_contact" +
+            ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
 
@@ -182,6 +183,8 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
             ps.setString(19, driverDetails.getCurrentStatusComment());
             ps.setInt(20, driverDetails.getUpdatedBy());
             ps.setTimestamp(21, new java.sql.Timestamp(driverDetails.getUpdateDateTime().getTime()));
+            ps.setString(22, driverDetails.getBloodGroup());
+            ps.setString(23, driverDetails.getEmergencyContact());
 
             return ps;
 
@@ -206,7 +209,7 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
 
     @Override
     public DriverDetails getDriverById(int driverId, String schoolCode) throws Exception {
-        String sql = "SELECT driver_id, school_id,session_id, sd_id, first_name, last_name, dob, contact_number, license_number, aadhar_number, joining_date, employment_type,experience, address, city, state, zip_code, country, current_status, current_status_comment from add_driver where driver_id = ?";
+        String sql = "SELECT driver_id, school_id,session_id, sd_id, first_name, last_name, dob, contact_number, license_number, aadhar_number, joining_date, employment_type,experience, address, city, state, zip_code, country, current_status, current_status_comment, blood_group, emergency_contact from add_driver where driver_id = ?";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
             return jdbcTemplate.queryForObject(sql, new Object[]{driverId}, new RowMapper<DriverDetails>() {
@@ -236,6 +239,8 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
                     dd.setCountry(rs.getString("country"));
                     dd.setCurrentStatus(rs.getString("current_status"));
                     dd.setCurrentStatusComment(rs.getString("current_status_comment"));
+                    dd.setBloodGroup(rs.getString("blood_group"));
+                    dd.setEmergencyContact(rs.getString("emergency_contact"));
 
                     return dd;
                 }

@@ -36,6 +36,27 @@ public class DriverDetails {
     private int updatedBy;
     private Date updateDateTime;
 
+
+//    ---------------------added by karan ----------------------------------
+
+    // After currentStatusComment field:
+    private String bloodGroup;
+    private String emergencyContact;
+
+    // After getCurrentStatusComment() getter/setter:
+    public String getBloodGroup() {
+        return bloodGroup;
+    }
+    public void setBloodGroup(String bloodGroup) {
+        this.bloodGroup = bloodGroup;
+    }
+
+    public String getEmergencyContact() {
+        return emergencyContact;
+    }
+    public void setEmergencyContact(String emergencyContact) {
+        this.emergencyContact = emergencyContact;
+    }
     // Getters and Setters
 
     public int getDriverId() {
