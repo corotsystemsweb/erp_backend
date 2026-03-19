@@ -67,7 +67,7 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                 ps.setInt(6, t.getSubjectId());
                 ps.setInt(7, t.getTeacherId());
                 ps.setString(8, t.getRoomNumber());
-                ps.setBoolean(9, t.isBreak());
+                ps.setBoolean(9, t.isBreakFlag());
                 ps.setInt(10, t.getUpdatedBy());
             });
         } finally {
@@ -106,9 +106,9 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                     timetable_master tm ON t.timetable_master_id = tm.timetable_master_id
                 JOIN
                     session s ON tm.session_id = s.session_id
-                JOIN
+                LEFT JOIN
                     mst_subject sub ON t.subject_id = sub.subject_id
-                JOIN
+                LEFT JOIN
                     staff st ON t.teacher_id = st.staff_id
                 JOIN
                     mst_class c ON tm.class_id = c.class_id
@@ -176,7 +176,7 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                     td.setStartTime(Time.valueOf(rs.getTime("start_time").toLocalTime()));
                     td.setEndTime(Time.valueOf(rs.getTime("end_time").toLocalTime()));
                     td.setRoomNumber(rs.getString("room_number"));
-                    td.setBreak(rs.getBoolean("is_break"));
+                    td.setBreakFlag(rs.getBoolean("is_break"));
                     return td;
                 }
             });
@@ -333,7 +333,7 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                     td.setStartTime(Time.valueOf(rs.getTime("start_time").toLocalTime()));
                     td.setEndTime(Time.valueOf(rs.getTime("end_time").toLocalTime()));
                     td.setRoomNumber(rs.getString("room_number"));
-                    td.setBreak(rs.getBoolean("is_break"));
+                    td.setBreakFlag(rs.getBoolean("is_break"));
                     return td;
                 }
             });
@@ -540,7 +540,7 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
                     td.setTeacherId(rs.getInt("teacher_id"));
                     td.setPeriodTeacherName(rs.getString("period_teacher_name"));
                     td.setRoomNumber(rs.getString("room_number"));
-                    td.setBreak(rs.getBoolean("is_break"));
+                    td.setBreakFlag(rs.getBoolean("is_break"));
                     td.setWeeklyTotalPeriods(rs.getInt("weekly_total_periods"));
                     td.setTotalPeriodsPerDay(rs.getInt("total_periods_per_day"));
                     td.setTotalPeriods(rs.getInt("total_periods"));
