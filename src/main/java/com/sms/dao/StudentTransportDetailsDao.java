@@ -2,6 +2,7 @@ package com.sms.dao;
 
 import com.sms.model.StudentTransportDetails;
 
+import java.util.Date;
 import java.util.List;
 
 public interface StudentTransportDetailsDao {
@@ -18,5 +19,5 @@ public interface StudentTransportDetailsDao {
             String status,
             String schoolCode) throws Exception;
 
-
+    List<StudentTransportDetails> getAllStudentsTransportDetails(int sessionId, String status, Integer routeId, Date dueMonth, String schoolCode) throws Exception;
 }

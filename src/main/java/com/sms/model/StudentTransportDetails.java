@@ -29,6 +29,10 @@ public class StudentTransportDetails {
     private String boardingPoint;
     private String destination;
     private String academicSession;
+    private int classId;
+    private String className;
+    private int sectionId;
+    private String sectionName;
 //    private String vehicleId;
 //    added for student transport details
 //    private BigDecimal feeAmount;
