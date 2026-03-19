@@ -14,10 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Repository
 public class StudentTransportDetailsDaoImpl implements StudentTransportDetailsDao {
@@ -449,6 +446,159 @@ public class StudentTransportDetailsDaoImpl implements StudentTransportDetailsDa
 
         return result[0];
     }
+
+    @Override
+    public List<StudentTransportDetails> getAllStudentsTransportDetails(int sessionId, String status, Integer routeId, Date dueMonth, String schoolCode) throws Exception {
+        StringBuilder sql = new StringBuilder(
+                """
+                        SELECT
+                            std.student_transport_id,
+                            std.student_id,
+                            std.session_id,
+                            s.academic_session,
+                            std.school_id,
+                            std.route_id,
+                            std.fee,
+                            std.status,
+                            std.start_date,
+                            std.end_date,
+                            spd.first_name,
+                            spd.last_name,
+                            ar.boarding_point,
+                            ar.destination,
+                            tfdue.tfdue_id,
+                            tfdue.fee_amount,
+                            tfdue.due_month,
+                            tfdue.discount_amount,
+                            tfdue.penalty_amount,
+                            COALESCE(tfdd.amount_paid, 0) AS paid_amount,
+                            COALESCE(
+                                tfdue.fee_amount
+                                - tfdue.discount_amount
+                                + tfdue.penalty_amount
+                                - COALESCE(tfdd.amount_paid, 0)
+                            , 0) AS due_amount,
+
+                            -- Class and section info
+                            sad.student_class_id AS class_id,
+                            c.class_name,
+                            sad.student_section_id AS section_id,
+                            sec.section_name,
+                
+                            -- Last paid date
+                            tfdd.last_paid_date
+                
+                        FROM student_transport_details std
+                        INNER JOIN student_personal_details spd
+                            ON spd.student_id = std.student_id
+                           AND spd.school_id = std.school_id
+                        INNER JOIN add_route ar
+                            ON ar.route_id = std.route_id
+                           AND ar.school_id = std.school_id
+                        INNER JOIN transport_fee_due tfdue
+                            ON tfdue.student_transport_id = std.student_transport_id
+                        LEFT JOIN (
+                            SELECT
+                                student_transport_id,
+                                due_month,
+                                SUM(amount_paid) AS amount_paid,
+                                MAX(system_date_time) AS last_paid_date
+                            FROM transport_fee_deposit_details
+                            GROUP BY student_transport_id, due_month
+                        ) tfdd
+                            ON tfdd.student_transport_id = tfdue.student_transport_id
+                           AND tfdd.due_month = tfdue.due_month
+                        INNER JOIN session s
+                            ON s.session_id = std.session_id
+                           AND s.school_id = std.school_id
+                        LEFT JOIN student_academic_details sad
+                            ON sad.student_id = std.student_id
+                           AND sad.session_id = std.session_id
+                        LEFT JOIN mst_class c
+                            ON c.class_id = sad.student_class_id
+                        LEFT JOIN mst_section sec
+                            ON sec.section_id = sad.student_section_id
+                        WHERE tfdue.fee_amount > 0
+                          AND std.session_id  = ?
+                """);
+        List<Object> params = new ArrayList<>();
+
+        params.add(sessionId);
+
+        //Dynamic filters
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND std.status = ? ");
+            params.add(status.toUpperCase());
+        }
+
+        if (routeId != null) {
+            sql.append(" AND std.route_id = ? ");
+            params.add(routeId);
+        }
+
+        if (dueMonth != null) {
+            sql.append(" AND tfdue.due_month = ? ");
+            params.add(new java.sql.Date(dueMonth.getTime()));
+        }
+
+        sql.append(" ORDER BY tfdue.due_month ");
+
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+
+        Map<Integer, StudentTransportDetails> studentMap = new LinkedHashMap<>();
+
+        try{
+            jdbcTemplate.query(sql.toString(), params.toArray(), rs -> {
+                int transportId = rs.getInt("student_transport_id");
+                StudentTransportDetails student = studentMap.get(transportId);
+                if(student == null){
+                    student = new StudentTransportDetails();
+                    student.setStudentTransportId(transportId);
+                    student.setStudentId(rs.getInt("student_id"));
+                    student.setSessionId(rs.getInt("session_id"));
+                    student.setAcademicSession(rs.getString("academic_session"));
+                    student.setSchoolId(rs.getInt("school_id"));
+                    student.setRouteId(rs.getInt("route_id"));
+                    student.setFee(rs.getBigDecimal("fee"));
+                    student.setStatus(rs.getString("status"));
+                    student.setStartDate(rs.getDate("start_date"));
+                    student.setEndDate(rs.getDate("end_date"));
+
+                    student.setFirstName(rs.getString("first_name"));
+                    student.setLastName(rs.getString("last_name"));
+                    student.setBoardingPoint(rs.getString("boarding_point"));
+                    student.setDestination(rs.getString("destination"));
+
+                    student.setClassId(rs.getInt("class_id"));
+                    student.setClassName(rs.getString("class_name"));
+                    student.setSectionId(rs.getInt("section_id"));
+                    student.setSectionName(rs.getString("section_name"));
+
+                    student.setDues(new ArrayList<>());
+
+                    studentMap.put(transportId, student);
+                }
+
+                //  Due mapping
+                StudentTransportDueDetails due = new StudentTransportDueDetails();
+
+                due.setTfdueId(rs.getInt("tfdue_id"));
+                due.setFeeAmount(rs.getBigDecimal("fee_amount"));
+                due.setDueMonth(rs.getDate("due_month"));
+                due.setDiscount(rs.getBigDecimal("discount_amount"));
+                due.setPenalty(rs.getBigDecimal("penalty_amount"));
+                due.setPaidAmount(rs.getBigDecimal("paid_amount"));
+                due.setDueAmount(rs.getBigDecimal("due_amount"));
+                due.setLastPaidDate(rs.getTimestamp("last_paid_date"));
+
+                student.getDues().add(due);
+            });
+        }finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+        return new ArrayList<>(studentMap.values());
+    }
+
 
 }
 
