@@ -3,6 +3,7 @@ package com.sms.controller;
 import com.sms.model.*;
 import com.sms.service.ClassSubjectTeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +23,10 @@ public class ClassSubjectTeacherController {
         try{
             result = classSubjectTeacherService.assignSubjectClassTeacher(classSubjectTeacherDetails,schoolCode);
             return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch(Exception e){
-            return new ResponseEntity<>(result,HttpStatus.UNAUTHORIZED);
+        } catch (DuplicateKeyException e){
+            return new ResponseEntity<>("Teacher already assigned for this class, section and subject", HttpStatus.CONFLICT);
+        }catch(Exception e){
+            return new ResponseEntity<>("Error while assigning teacher",HttpStatus.UNAUTHORIZED);
         }
     }
     @GetMapping("/get/all/{schoolCode}")
@@ -54,8 +57,10 @@ public class ClassSubjectTeacherController {
         try{
             result = classSubjectTeacherService.updateClassSubjectTeacher(classSubjectTeacherDetails,cstaId, schoolCode);
             return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (DuplicateKeyException e){
+            return new ResponseEntity<>("Teacher already assigned for this class, section and subject", HttpStatus.CONFLICT);
         }catch(Exception e){
-            return new ResponseEntity<>(result,HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error while assigning teacher",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @DeleteMapping("/delete/{cstaId}/{schoolCode}")

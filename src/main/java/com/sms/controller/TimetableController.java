@@ -29,13 +29,13 @@ public class TimetableController {
         }
     }
 
-    @PostMapping("/add-bulk/{schoolCode}")
-    public void createTimetableEntriesBulk(@RequestBody List<TimetableDetails> timetables, @PathVariable String schoolCode) {
-        try {
-            timetableService.addTimetableEntriesBulk(timetables, schoolCode);
-            System.out.println("Timetable entries created successfully!");
-        } catch (SQLException e) {
-            System.err.println("Error creating timetable entries: " + e.getMessage());
+    @PostMapping("/create-weekly/{schoolCode}")
+    public ResponseEntity<?> createWeeklyTimetable(@RequestBody List<TimetableDetails> timetableDetails, @PathVariable String schoolCode){
+        try{
+            String response = timetableService.createTimetableBulkWithMaster(timetableDetails, schoolCode);
+            return ResponseEntity.ok(response);
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

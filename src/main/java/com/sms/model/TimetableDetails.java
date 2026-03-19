@@ -1,6 +1,7 @@
 package com.sms.model;
 
 import java.sql.Time;
+import java.util.Date;
 
 public class TimetableDetails {
     private int timetableId;
@@ -25,8 +26,17 @@ public class TimetableDetails {
     private int totalStudents;
     private int totalPeriods;
     private int totalPeriodsPerDay;
+    private int timeTableMasterId;
+    private String periodName;
+    private boolean isBreak;
+    private int updatedBy;
+    private Date timeTableDate;
+    private Date weekStart;
+    private Date weekEnd;
+    private String periodTeacherName;
+    private int weeklyTotalPeriods;
 
-    public TimetableDetails(int timetableId, int schoolId, int sessionId, int classId, int sectionId, int subjectId, int teacherId, String dayOfWeek, int periodNumber, Time startTime, Time endTime, String roomNumber, String academicSession, String className, String sectionName, String subjectName, String teacherName, int staffId, String classTeacher, int totalStudents, int totalPeriods, int totalPeriodsPerDay) {
+    public TimetableDetails(int timetableId, int schoolId, int sessionId, int classId, int sectionId, int subjectId, int teacherId, String dayOfWeek, int periodNumber, Time startTime, Time endTime, String roomNumber, String academicSession, String className, String sectionName, String subjectName, String teacherName, int staffId, String classTeacher, int totalStudents, int totalPeriods, int totalPeriodsPerDay, int timeTableMasterId, String periodName, boolean isBreak, int updatedBy, Date timeTableDate, Date weekStart, Date weekEnd, String periodTeacherName, int weeklyTotalPeriods) {
         this.timetableId = timetableId;
         this.schoolId = schoolId;
         this.sessionId = sessionId;
@@ -49,6 +59,15 @@ public class TimetableDetails {
         this.totalStudents = totalStudents;
         this.totalPeriods = totalPeriods;
         this.totalPeriodsPerDay = totalPeriodsPerDay;
+        this.timeTableMasterId = timeTableMasterId;
+        this.periodName = periodName;
+        this.isBreak = isBreak;
+        this.updatedBy = updatedBy;
+        this.timeTableDate = timeTableDate;
+        this.weekStart = weekStart;
+        this.weekEnd = weekEnd;
+        this.periodTeacherName = periodTeacherName;
+        this.weeklyTotalPeriods = weeklyTotalPeriods;
     }
 
     public TimetableDetails() {
@@ -56,7 +75,6 @@ public class TimetableDetails {
     }
 
     // Getters and Setters
-
 
     public int getTimetableId() {
         return timetableId;
@@ -234,6 +252,81 @@ public class TimetableDetails {
         this.totalPeriodsPerDay = totalPeriodsPerDay;
     }
 
+    public int getTimeTableMasterId() {
+        return timeTableMasterId;
+    }
+
+    public void setTimeTableMasterId(int timeTableMasterId) {
+        this.timeTableMasterId = timeTableMasterId;
+    }
+
+    public String getPeriodName() {
+        return periodName;
+    }
+
+    public void setPeriodName(String periodName) {
+        this.periodName = periodName;
+    }
+
+    public boolean isBreak() {
+        return isBreak;
+    }
+
+    public void setBreak(boolean aBreak) {
+        isBreak = aBreak;
+    }
+
+    public int getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(int updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
+    public Date getTimeTableDate() {
+        return timeTableDate;
+    }
+
+    public void setTimeTableDate(Date timeTableDate) {
+        this.timeTableDate = timeTableDate;
+    }
+
+    public Date getWeekStart() {
+        return weekStart;
+    }
+
+    public void setWeekStart(Date weekStart) {
+        this.weekStart = weekStart;
+    }
+
+    public Date getWeekEnd() {
+        return weekEnd;
+    }
+
+    public void setWeekEnd(Date weekEnd) {
+        this.weekEnd = weekEnd;
+    }
+
+    public String getPeriodTeacherName() {
+        return periodTeacherName;
+    }
+
+    public void setPeriodTeacherName(String periodTeacherName) {
+        this.periodTeacherName = periodTeacherName;
+    }
+
+    public int getWeeklyTotalPeriods() {
+        return weeklyTotalPeriods;
+    }
+
+    public void setWeeklyTotalPeriods(int weeklyTotalPeriods) {
+        this.weeklyTotalPeriods = weeklyTotalPeriods;
+    }
+
+
+    // toString
+
     @Override
     public String toString() {
         return "TimetableDetails{" +
@@ -259,6 +352,15 @@ public class TimetableDetails {
                 ", totalStudents=" + totalStudents +
                 ", totalPeriods=" + totalPeriods +
                 ", totalPeriodsPerDay=" + totalPeriodsPerDay +
+                ", timeTableMasterId=" + timeTableMasterId +
+                ", periodName='" + periodName + '\'' +
+                ", isBreak=" + isBreak +
+                ", updatedBy=" + updatedBy +
+                ", timeTableDate=" + timeTableDate +
+                ", weekStart=" + weekStart +
+                ", weekEnd=" + weekEnd +
+                ", periodTeacherName='" + periodTeacherName + '\'' +
+                ", weeklyTotalPeriods=" + weeklyTotalPeriods +
                 '}';
     }
 }
