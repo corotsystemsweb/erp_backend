@@ -28,11 +28,15 @@ public class TimetableDetails {
     private int totalPeriodsPerDay;
     private int timeTableMasterId;
     private String periodName;
-    private boolean isBreak;
+    private boolean breakFlag;
     private int updatedBy;
     private Date timeTableDate;
+    private Date weekStart;
+    private Date weekEnd;
+    private String periodTeacherName;
+    private int weeklyTotalPeriods;
 
-    public TimetableDetails(int timetableId, int schoolId, int sessionId, int classId, int sectionId, int subjectId, int teacherId, String dayOfWeek, int periodNumber, Time startTime, Time endTime, String roomNumber, String academicSession, String className, String sectionName, String subjectName, String teacherName, int staffId, String classTeacher, int totalStudents, int totalPeriods, int totalPeriodsPerDay, int timeTableMasterId, String periodName, boolean isBreak, int updatedBy, Date timeTableDate) {
+    public TimetableDetails(int timetableId, int schoolId, int sessionId, int classId, int sectionId, int subjectId, int teacherId, String dayOfWeek, int periodNumber, Time startTime, Time endTime, String roomNumber, String academicSession, String className, String sectionName, String subjectName, String teacherName, int staffId, String classTeacher, int totalStudents, int totalPeriods, int totalPeriodsPerDay, int timeTableMasterId, String periodName, boolean breakFlag, int updatedBy, Date timeTableDate, Date weekStart, Date weekEnd, String periodTeacherName, int weeklyTotalPeriods) {
         this.timetableId = timetableId;
         this.schoolId = schoolId;
         this.sessionId = sessionId;
@@ -57,16 +61,17 @@ public class TimetableDetails {
         this.totalPeriodsPerDay = totalPeriodsPerDay;
         this.timeTableMasterId = timeTableMasterId;
         this.periodName = periodName;
-        this.isBreak = isBreak;
+        this.breakFlag = breakFlag;
         this.updatedBy = updatedBy;
         this.timeTableDate = timeTableDate;
+        this.weekStart = weekStart;
+        this.weekEnd = weekEnd;
+        this.periodTeacherName = periodTeacherName;
+        this.weeklyTotalPeriods = weeklyTotalPeriods;
     }
 
     public TimetableDetails() {
-
     }
-
-    // Getters and Setters
 
     public int getTimetableId() {
         return timetableId;
@@ -260,12 +265,12 @@ public class TimetableDetails {
         this.periodName = periodName;
     }
 
-    public boolean isBreak() {
-        return isBreak;
+    public boolean isBreakFlag() {
+        return breakFlag;
     }
 
-    public void setBreak(boolean aBreak) {
-        isBreak = aBreak;
+    public void setBreakFlag(boolean breakFlag) {
+        this.breakFlag = breakFlag;
     }
 
     public int getUpdatedBy() {
@@ -284,7 +289,37 @@ public class TimetableDetails {
         this.timeTableDate = timeTableDate;
     }
 
-    // toString
+    public Date getWeekStart() {
+        return weekStart;
+    }
+
+    public void setWeekStart(Date weekStart) {
+        this.weekStart = weekStart;
+    }
+
+    public Date getWeekEnd() {
+        return weekEnd;
+    }
+
+    public void setWeekEnd(Date weekEnd) {
+        this.weekEnd = weekEnd;
+    }
+
+    public String getPeriodTeacherName() {
+        return periodTeacherName;
+    }
+
+    public void setPeriodTeacherName(String periodTeacherName) {
+        this.periodTeacherName = periodTeacherName;
+    }
+
+    public int getWeeklyTotalPeriods() {
+        return weeklyTotalPeriods;
+    }
+
+    public void setWeeklyTotalPeriods(int weeklyTotalPeriods) {
+        this.weeklyTotalPeriods = weeklyTotalPeriods;
+    }
 
     @Override
     public String toString() {
@@ -313,9 +348,13 @@ public class TimetableDetails {
                 ", totalPeriodsPerDay=" + totalPeriodsPerDay +
                 ", timeTableMasterId=" + timeTableMasterId +
                 ", periodName='" + periodName + '\'' +
-                ", isBreak=" + isBreak +
+                ", breakFlag=" + breakFlag +
                 ", updatedBy=" + updatedBy +
                 ", timeTableDate=" + timeTableDate +
+                ", weekStart=" + weekStart +
+                ", weekEnd=" + weekEnd +
+                ", periodTeacherName='" + periodTeacherName + '\'' +
+                ", weeklyTotalPeriods=" + weeklyTotalPeriods +
                 '}';
     }
 }

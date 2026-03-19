@@ -4,10 +4,12 @@ package com.sms.controller;
 import com.sms.model.StudentTransportDetails;
 import com.sms.service.StudentTransportDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -87,5 +89,21 @@ public class StudentTransportDetailsController {
         }
     }
 
+    @GetMapping("filter")
+    public ResponseEntity<Object> getAllStudentsTransportDetails(
+            @RequestParam int sessionId, @RequestParam(required = false) String status, @RequestParam(required = false) Integer routeId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dueMonth,
+            @RequestParam String schoolCode){
+        Object result;
+        try{
+            result = studentTransportDetailsService.getAllStudentsTransportDetails(sessionId, status, routeId, dueMonth, schoolCode);
+            if(result == null){
+                return new ResponseEntity<>("Student not found", HttpStatus.NOT_FOUND);
+            }
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
