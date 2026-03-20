@@ -106,4 +106,29 @@ public class TimetableController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching timetable schedule");
         }
     }
+
+    @PutMapping("/update/{schoolCode}")
+    public ResponseEntity<?> updateTimetable(@RequestBody TimetableDetails timetableDetails, @PathVariable String schoolCode) {
+
+        try {
+            TimetableDetails result = timetableService.updateTimetable(timetableDetails, schoolCode);
+            return ResponseEntity.ok(result);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong while updating timetable");
+        }
+    }
+
+    @DeleteMapping("/delete/{timetableId}/{schoolCode}")
+    public ResponseEntity<?> deleteTimetable(@PathVariable int timetableId, @PathVariable String schoolCode){
+        try{
+            String result = timetableService.deleteTimetable(timetableId, schoolCode);
+            return ResponseEntity.ok(result);
+        } catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error while deleting timetable: " + e.getMessage());
+        }
+    }
 }

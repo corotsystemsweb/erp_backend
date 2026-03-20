@@ -556,5 +556,54 @@ public class CreateTimetableDaoImpl implements CreateTimetableDao {
         return timetableDetails;
     }
 
+    @Override
+    public TimetableDetails updateTimetable(TimetableDetails timetableDetails, String schoolCode) throws Exception {
+        String sql = "UPDATE timetable SET period_number = ?, period_name = ?, start_time = ?, end_time = ?, subject_id = ?, teacher_id = ?, room_number = ?, is_break = ?, updated_by = ? where timetable_id = ?";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            int rowAffected = jdbcTemplate.update(sql,
+                    timetableDetails.getPeriodNumber(),
+                    timetableDetails.getPeriodName(),
+                    timetableDetails.getStartTime(),
+                    timetableDetails.getEndTime(),
+                    timetableDetails.getSubjectId(),
+                    timetableDetails.getTeacherId(),
+                    timetableDetails.getRoomNumber(),
+                    timetableDetails.isBreakFlag(),
+                    timetableDetails.getUpdatedBy(),
+                    timetableDetails.getTimetableId()
+            );
+            if(rowAffected > 0){
+                return timetableDetails;
+            } else {
+                throw new RuntimeException("Timetable details not updated");
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("Error updating timetable", e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+
+    @Override
+    public String deleteTimetable(int timetableId, String schoolCode) throws Exception {
+        String sql = "UPDATE timetable SET is_deleted = true WHERE timetable_id = ?";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+
+        try{
+            int rowAffected = jdbcTemplate.update(sql, timetableId);
+
+            if(rowAffected > 0){
+                return "Timetable is deleted successfully";
+            } else {
+                return "Timetable is not deleted";
+            }
+        } catch (Exception e){
+            throw new Exception("Error while soft deleting timetable", e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
 
 }
