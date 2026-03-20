@@ -120,5 +120,14 @@ public class TimetableServiceImpl implements TimetableService {
         return createTimetableDao.getAllTimeTableSchedule(sessionId, schoolCode);
     }
 
+    @Override
+    public TimetableDetails updateTimetable(TimetableDetails timetableDetails, String schoolCode) throws Exception {
+        return createTimetableDao.updateTimetable(timetableDetails, schoolCode);
+    }
+
+    @Override
+    public String deleteTimetable(int timetableId, String schoolCode) throws Exception {
+        return createTimetableDao.deleteTimetable(timetableId, schoolCode);
+    }
 
 }
