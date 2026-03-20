@@ -13,4 +13,6 @@ public interface TimetableService {
     public int[] deleteTimetableBulk(List<Integer> timetableIds, String schoolCode) throws SQLException;
     public List<TimetableDetails> getAllTimeTableBasedOnStaffId(int sessionId, Integer staffId, String schoolCode) throws Exception;
     public List<TimetableDetails> getAllTimeTableSchedule(int sessionId, String schoolCode) throws Exception;
+    public TimetableDetails updateTimetable(TimetableDetails timetableDetails, String schoolCode) throws Exception;
+    public String deleteTimetable(int timetableId, String schoolCode) throws Exception;
 }
