@@ -41,7 +41,7 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
         if(addRouteDetailsList == null || addRouteDetailsList.isEmpty()){
             return "No route details are provided for insertion.";
         }
-        String sql = "insert into add_route (school_id, vehicle_id, boarding_point, destination, max_fee, stop_name, stop_fare, start_date, end_date, hash_value) values(?,?,?,?,?,?,?,CURRENT_DATE,?,?)";
+        String sql = "insert into add_route (school_id, vehicle_id, boarding_point, destination, max_fee, route_name, route_code, total_distance, estimated_time, stop_name, stop_fare, start_date, end_date, hash_value) values(?,?,?,?,?,?,?,?,?,?,?,CURRENT_DATE,?,?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             int[] batchResult = jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
@@ -54,10 +54,17 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
                     ps.setString(3, ard.getBoardingPoint().trim());
                     ps.setString(4, ard.getDestination().trim());
                     ps.setBigDecimal(5, ard.getMaxFee());
-                    ps.setString(6, ard.getStopName());
-                    ps.setBigDecimal(7, ard.getStopFare());
-                    ps.setDate(8, Date.valueOf("9999-12-31"));
-                    ps.setString(9, hashValue);
+
+                    ps.setString(6, ard.getRouteName());
+                    ps.setString(7, ard.getRouteCode());
+                    ps.setObject(8, ard.getTotalDistance());
+                    ps.setObject(9, ard.getEstimatedTime());
+
+                    ps.setString(10, ard.getStopName());
+                    ps.setBigDecimal(11, ard.getStopFare());
+
+                    ps.setDate(12, Date.valueOf("9999-12-31"));
+                    ps.setString(13, hashValue);
                 }
 
                 @Override
@@ -84,7 +91,8 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
         if(addRouteDetailsList == null || addRouteDetailsList.isEmpty()){
             return "No route details are provided for insertion.";
         }
-        String sql = "insert into add_route (school_id, vehicle_id, boarding_point, destination, max_fee, stop_name, stop_fare, start_date, end_date, hash_value) values(?,?,?,?,?,?,?,CURRENT_DATE,?,?)";
+       // String sql = "insert into add_route (school_id, vehicle_id, boarding_point, destination, max_fee, stop_name, stop_fare, start_date, end_date, hash_value) values(?,?,?,?,?,?,?,CURRENT_DATE,?,?)";
+        String sql = "insert into add_route (school_id, vehicle_id, boarding_point, destination, max_fee, route_name, route_code, total_distance, estimated_time, stop_name, stop_fare, start_date, end_date, hash_value) values(?,?,?,?,?,?,?,?,?,?,?,CURRENT_DATE,?,?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             int[] batchResult = jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
@@ -96,10 +104,17 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
                     ps.setString(3, ard.getBoardingPoint().trim());
                     ps.setString(4, ard.getDestination().trim());
                     ps.setBigDecimal(5, ard.getMaxFee());
-                    ps.setString(6, ard.getStopName());
-                    ps.setBigDecimal(7, ard.getStopFare());
-                    ps.setDate(8, Date.valueOf("9999-12-31"));
-                    ps.setString(9, ard.getHashValue());
+
+                    ps.setString(6, ard.getRouteName());
+                    ps.setString(7, ard.getRouteCode());
+                    ps.setObject(8, ard.getTotalDistance());
+                    ps.setObject(9, ard.getEstimatedTime());
+
+                    ps.setString(10, ard.getStopName());
+                    ps.setBigDecimal(11, ard.getStopFare());
+
+                    ps.setDate(12, Date.valueOf("9999-12-31"));
+                    ps.setString(13, ard.getHashValue());
                 }
 
                 @Override
@@ -123,7 +138,7 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
 
     @Override
     public List<AddRouteDetails> getAllRouteDetails(String schoolCode) throws Exception {
-        String sql = "SELECT DISTINCT ar.route_id, ar.school_id, ar.vehicle_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare, ar.start_date, ar.end_date, ar.hash_value FROM add_route ar JOIN add_vehicle av ON ar.vehicle_id = av.vehicle_id WHERE ar.end_date >= CURRENT_DATE order by route_id asc";
+        String sql = "SELECT DISTINCT ar.route_id, ar.school_id, ar.vehicle_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee,ar.route_name, ar.route_code, ar.total_distance, ar.estimated_time, ar.stop_name, ar.stop_fare, ar.start_date, ar.end_date, ar.hash_value FROM add_route ar JOIN add_vehicle av ON ar.vehicle_id = av.vehicle_id WHERE ar.end_date >= CURRENT_DATE order by route_id asc";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<AddRouteDetails> addRouteDetails = null;
         try{
@@ -138,6 +153,10 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
                     ard.setBoardingPoint(rs.getString("boarding_point"));
                     ard.setDestination(rs.getString("destination"));
                     ard.setMaxFee(rs.getBigDecimal("max_fee"));
+                    ard.setRouteName(rs.getString("route_name"));
+                    ard.setRouteCode(rs.getString("route_code"));
+                    ard.setTotalDistance((Double) rs.getObject("total_distance"));
+                    ard.setEstimatedTime((Integer) rs.getObject("estimated_time"));
                     ard.setStopName(rs.getString("stop_name"));
                     ard.setStopFare(rs.getBigDecimal("stop_fare"));
                     ard.setStartDate(rs.getDate("start_date"));
@@ -192,7 +211,10 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
 
     @Override
     public List<AddRouteDetails> getRouteDetailsBySearchText(String searchText, String schoolCode) throws Exception {
-        String sql = "select ar.route_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare from add_route as ar join add_vehicle as av ON ar.vehicle_id = av.vehicle_id WHERE CONCAT_WS(' ', ar.route_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare) ILIKE ? AND ar.end_date >= CURRENT_DATE";
+  String sql = "select ar.route_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee,\n" +
+          "ar.route_name, ar.route_code, ar.total_distance, ar.estimated_time,\n" +
+          "ar.stop_name, ar.stop_fare from add_route as ar join add_vehicle as av ON ar.vehicle_id = av.vehicle_id WHERE CONCAT_WS(' ', ar.route_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare) ILIKE ? AND ar.end_date >= CURRENT_DATE";
+
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<AddRouteDetails> addRouteDetails = null;
         try{
@@ -205,6 +227,12 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
                     ard.setBoardingPoint(rs.getString("boarding_point"));
                     ard.setDestination(rs.getString("destination"));
                     ard.setMaxFee(rs.getBigDecimal("max_fee"));
+//                    ====-------------------------------------------------------------added and maped by karan----------------------
+                    ard.setRouteName(rs.getString("route_name"));
+                    ard.setRouteCode(rs.getString("route_code"));
+                    ard.setTotalDistance((Double) rs.getObject("total_distance"));
+                    ard.setEstimatedTime((Integer) rs.getObject("estimated_time"));
+//                    ================================-----------------------------------------------------------------------------only above fields
                     ard.setStopName(rs.getString("stop_name"));
                     ard.setStopFare(rs.getBigDecimal("stop_fare"));
                     return ard;
@@ -224,7 +252,7 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
     @Override
     public RouteGroupDto getGroupedRoutes(String hashValue, String schoolCode) {
         String sql = """
-                SELECT ar.route_id, ar.vehicle_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare, ar.start_date, ar.end_date, ar.hash_value
+                SELECT ar.route_id, ar.vehicle_id, av.vehicle_number, ar.boarding_point, ar.destination, ar.max_fee, ar.stop_name, ar.stop_fare, ar.start_date, ar.end_date, ar.hash_value  ,ar.route_name, ar.route_code, ar.total_distance, ar.estimated_time
                 FROM add_route ar
                 JOIN add_vehicle av ON ar.vehicle_id = av.vehicle_id
                 WHERE ar.hash_value = ?
@@ -264,12 +292,16 @@ public class AddRouteDetailsDaoImpl implements AddRouteDetailsDao {
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             //1 Update parent route fields (all rows under same hash)
-            String parentSql = "UPDATE add_route SET vehicle_id=?, boarding_point=?, destination=?, max_fee=? WHERE hash_value=?";
+            String parentSql = "UPDATE add_route SET vehicle_id=?, boarding_point=?, destination=?, max_fee=?, route_name=?, route_code=?, total_distance=?, estimated_time=?  WHERE hash_value=?";
             jdbcTemplate.update(parentSql,
                     dto.getVehicleId(),
                     dto.getBoardingPoint(),
                     dto.getDestination(),
                     dto.getMaxFee(),
+                    dto.getRouteName(),
+                    dto.getRouteCode(),
+                    dto.getTotalDistance(),
+                    dto.getEstimatedTime(),
                     dto.getHashValue()
             );
             //2 Update each stop row

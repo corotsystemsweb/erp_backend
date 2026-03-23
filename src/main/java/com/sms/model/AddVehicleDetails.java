@@ -13,6 +13,47 @@ public class AddVehicleDetails {
     private Date renewalInsuranceDate;
     private Date lastServiceDate;
 
+
+//    ---------------------------------------added by karan--------------------------
+
+    private String model;
+    private String manufacturer;
+    private int yearOfManufacture;
+    private Date registrationDate;
+    private Date fitnessExpiry;
+    private String status;
+
+
+    // getters & setters for all 6
+    public String getModel() { return model; }
+    public void setModel(String model) { this.model = model; }
+
+    public String getManufacturer() { return manufacturer; }
+    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+
+    public int getYearOfManufacture() { return yearOfManufacture; }
+    public void setYearOfManufacture(int yearOfManufacture) { this.yearOfManufacture = yearOfManufacture; }
+
+    public Date getRegistrationDate() { return registrationDate; }
+    public void setRegistrationDate(Date registrationDate) { this.registrationDate = registrationDate; }
+
+    public Date getFitnessExpiry() { return fitnessExpiry; }
+    public void setFitnessExpiry(Date fitnessExpiry) { this.fitnessExpiry = fitnessExpiry; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+
+
+
+
+//---------------------------------------------------------------------ended here ----------------------------------------
+
+
+
+
+
+
     public int getVehicleId() {
         return vehicleId;
     }

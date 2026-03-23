@@ -631,7 +631,13 @@ CREATE TABLE add_vehicle (
    refuel_amount DOUBLE PRECISION DEFAULT NULL,
    last_insurance_date DATE DEFAULT NULL,
    renewal_insurance_date DATE DEFAULT NULL,
-   last_service_date DATE DEFAULT NULL
+   last_service_date DATE DEFAULT NULL,
+   model VARCHAR(255),
+   manufacturer VARCHAR(255),
+   year_of_manufacture INT,
+   registration_date DATE,
+   fitness_expiry DATE,
+   status VARCHAR(50)
 );
 CREATE table add_driver (
    driver_id SERIAL NOT NULL,
@@ -655,7 +661,9 @@ CREATE table add_driver (
    current_status VARCHAR(255) default null,
    current_status_comment VARCHAR(255),
    updated_by INT DEFAULT NULL,
-   update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+   blood_group VARCHAR(10) DEFAULT NULL,
+   emergency_contact VARCHAR(255) DEFAULT NULL
 );
 
 /*script for add_route*/
@@ -670,7 +678,11 @@ CREATE TABLE add_route (
    stop_fare NUMERIC(10,2),
    start_date DATE NOT NULL,
    end_date DATE NOT NULL,
-   hash_value VARCHAR(255) NOT NULL
+   hash_value VARCHAR(255) NOT NULL,
+   route_name VARCHAR(255),
+   route_code VARCHAR(100),
+   total_distance DOUBLE PRECISION,
+   estimated_time INT
 );
 /*script for transport allocation*/
    CREATE TABLE transport_allocation (
@@ -2067,40 +2079,48 @@ BEGIN
      -- Create the add_vehicle table
      ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.add_vehicle (
         vehicle_id SERIAL NOT NULL,
-        school_id INT NOT NULL,
-        vehicle_number VARCHAR(255) NOT NULL,
-        vehicle_type VARCHAR(255) DEFAULT NULL,
-        number_of_seat INT DEFAULT NULL,
-        refuel_amount DOUBLE PRECISION DEFAULT NULL,
-        last_insurance_date DATE DEFAULT NULL,
-        renewal_insurance_date DATE DEFAULT NULL,
-        last_service_date DATE DEFAULT NULL
+         school_id INT NOT NULL,
+         vehicle_number VARCHAR(255) NOT NULL,
+         vehicle_type VARCHAR(255) DEFAULT NULL,
+         number_of_seat INT DEFAULT NULL,
+         refuel_amount DOUBLE PRECISION DEFAULT NULL,
+         last_insurance_date DATE DEFAULT NULL,
+         renewal_insurance_date DATE DEFAULT NULL,
+         last_service_date DATE DEFAULT NULL,
+         model VARCHAR(255),
+         manufacturer VARCHAR(255),
+         year_of_manufacture INT,
+         registration_date DATE,
+         fitness_expiry DATE,
+         status VARCHAR(50)
      )';
      EXECUTE ddl_statement;
      -- Create the add_driver table
      ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.add_driver (
         driver_id SERIAL NOT NULL,
-          school_id INT NOT NULL,
-          session_id INT NOT null,
-          sd_id INT NOT NULL,
-          first_name VARCHAR(255) NOT NULL,
-          last_name VARCHAR(255) DEFAULT NULL,
-          dob DATE NOT NULL,
-          contact_number VARCHAR(255) NOT NULL,
-          license_number VARCHAR(255) NOT NULL,
-          aadhar_number VARCHAR(255) NOT NULL,
-          joining_date Date NOT NULL,
-          employment_type VARCHAR(255) DEFAULT NULL,
-          experience VARCHAR(255) DEFAULT NULL,
-          address VARCHAR(255) default null,
-          city VARCHAR(255) default null,
-          state VARCHAR(255) default null,
-          zip_code INT default null,
-          country VARCHAR(255) default null,
-          current_status VARCHAR(255) default null,
-          current_status_comment VARCHAR(255),
-          updated_by INT DEFAULT NULL,
-          update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        school_id INT NOT NULL,
+        session_id INT NOT null,
+        sd_id INT NOT NULL,
+        first_name VARCHAR(255) NOT NULL,
+        last_name VARCHAR(255) DEFAULT NULL,
+        dob DATE NOT NULL,
+        contact_number VARCHAR(255) NOT NULL,
+        license_number VARCHAR(255) NOT NULL,
+        aadhar_number VARCHAR(255) NOT NULL,
+        joining_date Date NOT NULL,
+        employment_type VARCHAR(255) DEFAULT NULL,
+        experience VARCHAR(255) DEFAULT NULL,
+        address VARCHAR(255) default null,
+        city VARCHAR(255) default null,
+        state VARCHAR(255) default null,
+        zip_code INT default null,
+        country VARCHAR(255) default null,
+        current_status VARCHAR(255) default null,
+        current_status_comment VARCHAR(255),
+        updated_by INT DEFAULT NULL,
+        update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        blood_group VARCHAR(10) DEFAULT NULL,
+        emergency_contact VARCHAR(255) DEFAULT NULL
 )';
      EXECUTE ddl_statement;
     -- Create the add_route table
@@ -2115,7 +2135,11 @@ BEGIN
         stop_fare NUMERIC(10,2),
         start_date DATE NOT NULL,
         end_date DATE NOT NULL,
-        hash_value VARCHAR(255) NOT NULL
+        hash_value VARCHAR(255) NOT NULL,
+        route_name VARCHAR(255),
+        route_code VARCHAR(100),
+        total_distance DOUBLE PRECISION,
+        estimated_time INT
      )';
      EXECUTE ddl_statement;
     -- Create the transport_allocation table

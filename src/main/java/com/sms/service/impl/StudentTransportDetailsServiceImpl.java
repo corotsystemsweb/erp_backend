@@ -6,6 +6,7 @@ import com.sms.service.StudentTransportDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -59,6 +60,11 @@ public class StudentTransportDetailsServiceImpl implements StudentTransportDetai
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<StudentTransportDetails> getAllStudentsTransportDetails(int sessionId, String status, Integer routeId, Date dueMonth, String schoolCode) throws Exception {
+        return studentTransportDetailsDao.getAllStudentsTransportDetails(sessionId, status, routeId, dueMonth, schoolCode);
     }
 
 
