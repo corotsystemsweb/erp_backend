@@ -26,56 +26,11 @@ public class StaffAttendanceDaoImpl implements StaffAttendanceDao {
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public List<StaffAttendanceDetails> getAllStaffDetails(String schoolCode) throws Exception {
-        String sql = """
-                SELECT
-                    COALESCE(s.staff_id, d.driver_id) AS staff_id,
-                    CASE
-                        WHEN s.staff_id IS NOT NULL THEN 'STAFF'
-                        ELSE 'DRIVER'
-                    END AS staff_type,
-                    CONCAT(COALESCE(s.first_name, d.first_name), ' ', COALESCE(s.last_name, d.last_name)) AS staff_name,
-                    COALESCE(s.phone_number, d.contact_number) AS phone_number,
-                    COALESCE(s.designation_id, d.sd_id) AS designation_id,
-                    sd.designation AS designation
-                FROM
-                    staff s
-                FULL OUTER JOIN
-                    add_driver d ON s.designation_id = d.sd_id
-                JOIN
-                    staff_designation sd ON sd.sd_id = COALESCE(s.designation_id, d.sd_id)
-                WHERE
-                    (s.deleted IS NOT TRUE)
-                                
-                """;
-        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
-        List<StaffAttendanceDetails> staffAttendanceDetails = null;
-        try{
-            staffAttendanceDetails = jdbcTemplate.query(sql, new RowMapper<StaffAttendanceDetails>() {
-                @Override
-                public StaffAttendanceDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    StaffAttendanceDetails sad = new StaffAttendanceDetails();
-                    sad.setStaffId(rs.getInt("staff_id"));
-                    sad.setStaffType(rs.getString("staff_type"));
-                    sad.setStaffName(rs.getString("staff_name"));
-                    sad.setPhoneNumber(CipherUtils.decrypt(rs.getString("phone_number")));
-                    sad.setDesignationId(rs.getInt("designation_id"));
-                    sad.setDesignation(rs.getString("designation"));
-                    return sad;
-                }
-            });
-        }catch (Exception e){
-            e.printStackTrace();
-            return null;
-        }finally {
-            DatabaseUtil.closeDataSource(jdbcTemplate);
-        }
-        return staffAttendanceDetails;
-    }
-
-    @Override
     public List<StaffAttendanceDetails> addStaffAttendanceDetails(List<StaffAttendanceDetails> staffAttendanceDetails, String schoolCode) throws Exception {
-        String sql = "insert into staff_attendance (staff_id, staff_type, designation_id, attendance_date, attendance_status) values (?,?,?,?,?)";
+        String sql = "INSERT INTO staff_attendance " +
+                "(school_id, session_id, staff_id, staff_type, designation_id, department_id, " +
+                "attendance_date, attendance_status, check_in_time, check_out_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<StaffAttendanceDetails> insertStaff = new ArrayList<>();
         try{
@@ -83,11 +38,25 @@ public class StaffAttendanceDaoImpl implements StaffAttendanceDao {
                 KeyHolder keyHolder = new GeneratedKeyHolder();
                 jdbcTemplate.update(connection -> {
                     PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                    ps.setInt(1, staffAttendance.getStaffId());
-                    ps.setString(2, staffAttendance.getStaffType());
-                    ps.setInt(3, staffAttendance.getDesignationId());
-                    ps.setDate(4, new java.sql.Date(staffAttendance.getAttendanceDate().getTime()));
-                    ps.setString(5, staffAttendance.getAttendanceStatus());
+                    ps.setInt(1, staffAttendance.getSchoolId());
+                    ps.setInt(2, staffAttendance.getSessionId());
+                    ps.setInt(3, staffAttendance.getStaffId());
+                    ps.setString(4, staffAttendance.getStaffType());
+                    ps.setInt(5, staffAttendance.getDesignationId());
+                    ps.setInt(6, staffAttendance.getDepartmentId());
+                    ps.setDate(7, new java.sql.Date(staffAttendance.getAttendanceDate().getTime()));
+                    ps.setString(8, staffAttendance.getAttendanceStatus());
+                    if (staffAttendance.getCheckInTime() != null) {
+                        ps.setTime(9, staffAttendance.getCheckInTime());
+                    } else {
+                        ps.setNull(9, java.sql.Types.TIME);
+                    }
+
+                    if (staffAttendance.getCheckOutTime() != null) {
+                        ps.setTime(10, staffAttendance.getCheckOutTime());
+                    } else {
+                        ps.setNull(10, java.sql.Types.TIME);
+                    }
                     return ps;
                 }, keyHolder);
                 Map<String, Object> keys = keyHolder.getKeys();
@@ -107,341 +76,107 @@ public class StaffAttendanceDaoImpl implements StaffAttendanceDao {
         return insertStaff;
     }
 
-//    @Override
-//    public List<StaffAttendanceDetails> getAllStaffAttendanceDetails(Integer staffId, String staffName, Integer designationId, Date dateFrom, Date dateTo, String schoolCode) throws Exception {
-//        String sql = /*"""
-//                WITH TotalDays AS (
-//                    SELECT
-//                        COUNT(DISTINCT attendance_date) AS total_days
-//                    FROM
-//                        staff_attendance
-//                    WHERE
-//                        (? :: date IS NULL OR attendance_date >= ?)
-//                        AND (? :: date IS NULL OR attendance_date <= ?)
-//                ),
-//                AttendanceSummary AS (
-//                    SELECT
-//                        sa.staff_id,
-//                        sa.staff_type,
-//                        COUNT(CASE WHEN LOWER(sa.attendance_status) = 'present' THEN 1 END) AS total_present
-//                    FROM
-//                        staff_attendance sa
-//                    WHERE
-//                        (? :: date IS NULL OR sa.attendance_date >= ?)
-//                        AND (? :: date IS NULL OR sa.attendance_date <= ?)
-//                    GROUP BY
-//                        sa.staff_id, sa.staff_type
-//                )
-//                SELECT
-//                    DISTINCT sa.staff_id,
-//                    CONCAT(
-//                        COALESCE(s.first_name, d.first_name), ' ',
-//                        COALESCE(s.last_name, d.last_name)
-//                    ) AS staff_name,
-//                    COALESCE(s.phone_number, d.contact_number) AS phone_number,
-//                    td.total_days,
-//                    ats.total_present,
-//                    (td.total_days - ats.total_present) AS total_absent,
-//                    sd.designation AS designation,
-//                    sa.staff_type
-//                FROM
-//                    staff_attendance sa
-//                CROSS JOIN
-//                    TotalDays td
-//                LEFT JOIN
-//                    AttendanceSummary ats ON sa.staff_id = ats.staff_id AND sa.staff_type = ats.staff_type
-//                LEFT JOIN
-//                    staff s ON sa.staff_id = s.staff_id AND sa.staff_type = 'STAFF'
-//                LEFT JOIN
-//                    add_driver d ON sa.staff_id = d.driver_id AND sa.staff_type = 'DRIVER'
-//                LEFT JOIN
-//                    staff_designation sd ON sa.designation_id = sd.sd_id
-//                WHERE
-//                    sa.staff_type IN ('STAFF', 'DRIVER')
-//                    AND (? :: int IS NULL OR sa.staff_id = ?)
-//                    AND (
-//                        ? :: TEXT IS NULL OR CONCAT(
-//                            COALESCE(s.first_name, d.first_name), ' ',
-//                            COALESCE(s.last_name, d.last_name)
-//                        ) = ?
-//                    )
-//                    AND (? :: int IS NULL OR sd.sd_id = ?)
-//                ORDER BY
-//                    sa.staff_id
-//                """*/
-//                """
-//                        WITH TotalDays AS (
-//                                                                                        SELECT COUNT(DISTINCT attendance_date::date) AS total_days
-//                                                                                        FROM staff_attendance
-//                                                                                        WHERE (?::date IS NULL OR attendance_date::date >= ?::date)
-//                                                                                            AND (?::date IS NULL OR attendance_date::date <= ?::date)
-//                                                                                    ),
-//                                                                                    StaffList AS (
-//                                                                                        SELECT DISTINCT staff_id, staff_type
-//                                                                                        FROM staff_attendance
-//                                                                                    ),
-//                                                                                    AttendanceSummary AS (
-//                                                                                        SELECT
-//                                                                                            sa.staff_id,
-//                                                                                            sa.staff_type,
-//                                                                                            COUNT(DISTINCT CASE\s
-//                                                                                                             WHEN LOWER(sa.attendance_status) = 'present'\s
-//                                                                                                             THEN sa.attendance_date::date\s
-//                                                                                                           END) AS total_present
-//                                                                                        FROM staff_attendance sa
-//                                                                                        WHERE (?::date IS NULL OR sa.attendance_date::date >= ?::date)
-//                                                                                            AND (?::date IS NULL OR sa.attendance_date::date <= ?::date)
-//                                                                                        GROUP BY sa.staff_id, sa.staff_type
-//                                                                                    )
-//                                                                                    SELECT
-//                                                                                        sl.staff_id,
-//                                                                                        CONCAT(
-//                                                                                            COALESCE(s.first_name, d.first_name), ' ',
-//                                                                                            COALESCE(s.last_name, d.last_name)
-//                                                                                        ) AS staff_name,
-//                                                                                        COALESCE(s.phone_number, d.contact_number) AS phone_number,
-//                                                                                        td.total_days,
-//                                                                                        COALESCE(ats.total_present, 0) AS total_present,
-//                                                                                        (td.total_days - COALESCE(ats.total_present, 0)) AS total_absent,
-//                                                                                        COALESCE(sd.designation, 'N/A') AS designation,
-//                                                                                        sl.staff_type
-//                                                                                    FROM StaffList sl
-//                                                                                    CROSS JOIN TotalDays td
-//                                                                                    LEFT JOIN AttendanceSummary ats\s
-//                                                                                        ON sl.staff_id = ats.staff_id AND sl.staff_type = ats.staff_type
-//                                                                                    LEFT JOIN staff s\s
-//                                                                                        ON sl.staff_id = s.staff_id AND sl.staff_type = 'STAFF'
-//                                                                                    LEFT JOIN add_driver d\s
-//                                                                                        ON sl.staff_id = d.driver_id AND sl.staff_type = 'DRIVER'
-//                                                                                    LEFT JOIN staff_designation sd\s
-//                                                                                        ON s.designation_id = sd.sd_id
-//                                                                                    WHERE
-//                                                                                        sl.staff_type IN ('STAFF', 'DRIVER')
-//                                                                                        AND (?::int IS NULL OR sl.staff_id = ?)
-//                                                                                        AND (
-//                                                                                            ?::TEXT IS NULL OR\s
-//                                                                                            CONCAT(COALESCE(s.first_name, d.first_name), ' ', COALESCE(s.last_name, d.last_name))\s
-//                                                                                            ILIKE '%' || ? || '%'
-//                                                                                        )
-//                                                                                        AND (?::int IS NULL OR sd.sd_id = ?)
-//                                                                                    ORDER BY sl.staff_id;
-//                        """;
-//        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
-//        List<StaffAttendanceDetails> staffAttendanceDetails = null;
-//        try{
-//            staffAttendanceDetails = jdbcTemplate.query(
-//                    sql,
-//                    new Object[]{
-//                            // TotalDays CTE (4 params)
-//                            dateFrom, dateFrom, dateTo, dateTo,
-//
-//                            // AttendanceSummary CTE (4 params)
-//                            dateFrom, dateFrom, dateTo, dateTo,
-//
-//                            // Main query filters (6 params)
-//                            staffId, staffId,
-//                            staffName, staffName,
-//                            designationId, designationId
-//                    },
-//                    new RowMapper<StaffAttendanceDetails>(){
-//
-//                @Override
-//                public StaffAttendanceDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-//                    StaffAttendanceDetails sad = new StaffAttendanceDetails();
-//                    sad.setStaffId(rs.getInt("staff_id"));
-//                    sad.setStaffName(rs.getString("staff_name"));
-//                    sad.setPhoneNumber(rs.getString("phone_number") != null ? CipherUtils.decrypt(rs.getString("phone_number")) : null);
-//                    sad.setTotalDays(rs.getDouble("total_days"));
-//                    sad.setTotalPresent(rs.getDouble("total_present"));
-//                    sad.setTotalAbsent(rs.getDouble("total_absent"));
-//                    sad.setDesignation(rs.getString("designation"));
-//                    sad.setStaffType(rs.getString("staff_type"));
-//                    return sad;
-//                }
-//            });
-//        }catch (Exception e){
-//            e.printStackTrace();
-//            return null;
-//        }finally {
-//            DatabaseUtil.closeDataSource(jdbcTemplate);
-//        }
-//        return staffAttendanceDetails;
-//    }
-
     @Override
-    public List<StaffAttendanceDetails> getAllStaffAttendanceDetails(
-            Integer staffId,
-            String staffName,
-            Integer designationId,
-            Date dateFrom,
-            Date dateTo,
-            String schoolCode) {
+    public List<StaffAttendanceDetails> getStaffAttendance(Integer staffId, Integer departmentId, Integer designationId, Date date, String schoolCode) throws Exception {
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
 
-        String sql = """
-        WITH DateRange AS (
-            SELECT DISTINCT attendance_date
-            FROM staff_attendance
-            WHERE
-                (?::date IS NULL OR attendance_date >= ?)
-                AND
-                (?::date IS NULL OR attendance_date <= ?)
-        ),
+        String baseQuery =
+                "SELECT " +
+                        "   sa.sa_id, " +
+                        "   sa.school_id, " +
+                        "   sa.session_id, " +
+                        "   s.academic_session, " +
+                        "   sa.staff_id, " +
+                        "   sa.staff_type, " +
+                        "   CASE " +
+                        "       WHEN sa.staff_type = 'STAFF'  THEN CONCAT(st.first_name, ' ', st.last_name) " +
+                        "       WHEN sa.staff_type = 'DRIVER' THEN CONCAT(dr.first_name, ' ', dr.last_name) " +
+                        "   END AS staff_name, " +
+                        "   sa.department_id, " +
+                        "   sd.department AS department_name, " +
+                        "   sa.designation_id, " +
+                        "   sdes.designation AS designation_name, " +
+                        "   sa.attendance_date, " +
+                        "   sa.attendance_status, " +
+                        "   sa.check_in_time, " +
+                        "   sa.check_out_time " +
+                        "FROM staff_attendance sa " +
+                        "JOIN session s " +
+                        "   ON s.session_id = sa.session_id " +
+                        "JOIN staff_department sd " +
+                        "   ON sd.stdp_id = sa.department_id " +
+                        "JOIN staff_designation sdes " +
+                        "   ON sdes.sd_id = sa.designation_id " +
+                        "LEFT JOIN staff st " +
+                        "   ON st.staff_id = sa.staff_id AND sa.staff_type = 'STAFF' " +
+                        "LEFT JOIN add_driver dr " +
+                        "   ON dr.driver_id = sa.staff_id AND sa.staff_type = 'DRIVER' ";
 
-        StaffList AS (
-            SELECT
-                st.staff_id,
-                'STAFF' AS staff_type,
-                st.first_name,
-                st.last_name,
-                st.phone_number,
-                st.designation_id
-            FROM staff st
-            WHERE (st.deleted IS NULL OR st.deleted = false)
-              AND st.current_status = 'active'
+        StringBuilder whereClause = new StringBuilder("WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
 
-            UNION ALL
+        if (date == null) {
+            whereClause.append("AND sa.attendance_date = CURRENT_DATE ");
+        } else {
+            whereClause.append("AND sa.attendance_date = ? ");
+            params.add(new java.sql.Date(date.getTime()));
+        }
 
-            SELECT
-                d.driver_id,
-                'DRIVER',
-                d.first_name,
-                d.last_name,
-                d.contact_number,
-                d.sd_id
-            FROM add_driver d
-        ),
+        if (staffId != null) {
+            whereClause.append("AND sa.staff_id = ? ");
+            params.add(staffId);
+        }
 
-        DailyAttendance AS (
-            SELECT
-                sl.staff_id,
-                sl.staff_type,
-                dr.attendance_date,
-                sa.attendance_status AS status
-            FROM StaffList sl
-            JOIN DateRange dr ON true
-            LEFT JOIN staff_attendance sa
-                ON sa.staff_id = sl.staff_id
-                AND sa.staff_type = sl.staff_type
-                AND sa.attendance_date = dr.attendance_date
-        ),
+        if (departmentId != null) {
+            whereClause.append("AND sa.department_id = ? ");
+            params.add(departmentId);
+        }
 
-        Summary AS (
-            SELECT
-                staff_id,
-                staff_type,
-                COUNT(*) FILTER (WHERE LOWER(status)='present') AS total_present,
-                COUNT(*) FILTER (WHERE LOWER(status)='absent') AS total_absent,
-                COUNT(status) AS total_days
-            FROM DailyAttendance
-            GROUP BY staff_id, staff_type
-        )
+        if (designationId != null) {
+            whereClause.append("AND sa.designation_id = ? ");
+            params.add(designationId);
+        }
 
-        SELECT
-            sl.staff_id,
-            CONCAT(sl.first_name,' ',sl.last_name) AS staff_name,
-            sl.phone_number,
-            sl.staff_type,
-            COALESCE(sd.designation,'N/A') AS designation,
+        String orderBy =
+                "ORDER BY sa.attendance_date DESC, " +
+                "CASE " +
+                "   WHEN sa.staff_type = 'STAFF'  THEN CONCAT(st.first_name, ' ', st.last_name) " +
+                "   WHEN sa.staff_type = 'DRIVER' THEN CONCAT(dr.first_name, ' ', dr.last_name) " +
+                "END ASC ";
 
-            COALESCE(sm.total_days,0) AS total_days,
-            COALESCE(sm.total_present,0) AS total_present,
-            COALESCE(sm.total_absent,0) AS total_absent,
-
-            ROUND(
-                CASE
-                    WHEN COALESCE(sm.total_days,0) = 0 THEN 0
-                    ELSE (sm.total_present*100.0/sm.total_days)
-                END,2
-            ) AS attendance_percentage,
-
-            json_agg(
-                json_build_object(
-                    'date', da.attendance_date,
-                    'status', COALESCE(da.status,'Not Marked')
-                )
-                ORDER BY da.attendance_date
-            ) AS daily_details
-
-        FROM StaffList sl
-        LEFT JOIN staff_designation sd
-            ON sl.designation_id = sd.sd_id
-        LEFT JOIN Summary sm
-            ON sl.staff_id = sm.staff_id
-            AND sl.staff_type = sm.staff_type
-        LEFT JOIN DailyAttendance da
-            ON sl.staff_id = da.staff_id
-            AND sl.staff_type = da.staff_type
-
-        WHERE
-            (?::int IS NULL OR sl.staff_id = ?)
-            AND (
-                ?::TEXT IS NULL OR
-                CONCAT(sl.first_name,' ',sl.last_name) ILIKE '%'||?||'%'
-            )
-            AND (?::int IS NULL OR sl.designation_id = ?)
-
-        GROUP BY
-            sl.staff_id,
-            sl.first_name,
-            sl.last_name,
-            sl.phone_number,
-            sl.staff_type,
-            sd.designation,
-            sm.total_days,
-            sm.total_present,
-            sm.total_absent
-
-        ORDER BY sl.staff_id;
-        """;
-
-        JdbcTemplate jdbcTemplate =
-                DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        String finalQuery = baseQuery + whereClause + orderBy;
 
         try {
+            List<StaffAttendanceDetails> result = jdbcTemplate.query(finalQuery, params.toArray(), (rs, rowNum) -> {
+                StaffAttendanceDetails details = new StaffAttendanceDetails();
+                details.setSaId(rs.getInt("sa_id"));
+                details.setSchoolId(rs.getInt("school_id"));
+                details.setSessionId(rs.getInt("session_id"));
+                details.setAcademicSession(rs.getString("academic_session"));
+                details.setStaffId(rs.getInt("staff_id"));
+                details.setStaffType(rs.getString("staff_type"));
+                details.setStaffName(rs.getString("staff_name"));
+                details.setDepartmentId(rs.getInt("department_id"));
+                details.setDepartmentName(rs.getString("department_name"));
+                details.setDesignationId(rs.getInt("designation_id"));
+                details.setDesignation(rs.getString("designation_name"));
+                details.setAttendanceDate(rs.getDate("attendance_date"));
+                details.setAttendanceStatus(rs.getString("attendance_status"));
+                details.setCheckInTime(rs.getTime("check_in_time"));
+                details.setCheckOutTime(rs.getTime("check_out_time"));
+                return details;
+            });
 
-            return jdbcTemplate.query(
-                    sql,
-                    new Object[]{
-                            // DateRange params (IMPORTANT ORDER)
-                            dateFrom, dateFrom,
-                            dateTo, dateTo,
+            if (result == null || result.isEmpty()) {
+                return null;
+            }
+            return result;
 
-                            // Filters
-                            staffId, staffId,
-                            staffName, staffName,
-                            designationId, designationId
-                    },
-                    (rs, rowNum) -> {
-
-                        StaffAttendanceDetails sad =
-                                new StaffAttendanceDetails();
-
-                        sad.setStaffId(rs.getInt("staff_id"));
-                        sad.setStaffName(rs.getString("staff_name"));
-                        sad.setStaffType(rs.getString("staff_type"));
-
-                        String phone = rs.getString("phone_number");
-                        sad.setPhoneNumber(
-                                phone != null ? CipherUtils.decrypt(phone) : null
-                        );
-
-                        sad.setDesignation(rs.getString("designation"));
-                        sad.setTotalDays(rs.getDouble("total_days"));
-                        sad.setTotalPresent(rs.getDouble("total_present"));
-                        sad.setTotalAbsent(rs.getDouble("total_absent"));
-                        sad.setAttendancePercentage(
-                                rs.getDouble("attendance_percentage")
-                        );
-
-                        sad.setDailyDetails(rs.getString("daily_details"));
-
-                        return sad;
-                    }
-            );
-
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         } finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
     }
-
 }

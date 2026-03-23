@@ -15,17 +15,14 @@ public class StaffAttendanceServiceImpl implements StaffAttendanceService {
     private StaffAttendanceDao staffAttendanceDao;
 
     @Override
-    public List<StaffAttendanceDetails> getAllStaffDetails(String schoolCode) throws Exception {
-        return staffAttendanceDao.getAllStaffDetails(schoolCode);
-    }
-
-    @Override
     public List<StaffAttendanceDetails> addStaffAttendanceDetails(List<StaffAttendanceDetails> staffAttendanceDetails, String schoolCode) throws Exception {
         return staffAttendanceDao.addStaffAttendanceDetails(staffAttendanceDetails, schoolCode);
     }
 
     @Override
-    public List<StaffAttendanceDetails> getAllStaffAttendanceDetails(Integer staffId, String staffName, Integer designationId, Date dateFrom, Date dateTo, String schoolCode) throws Exception {
-        return staffAttendanceDao.getAllStaffAttendanceDetails(staffId, staffName, designationId, dateFrom, dateTo, schoolCode);
+    public List<StaffAttendanceDetails> getStaffAttendance(Integer staffId, Integer departmentId, Integer designationId, Date date, String schoolCode) throws Exception {
+        return staffAttendanceDao.getStaffAttendance(staffId, departmentId, designationId, date, schoolCode);
     }
+
+
 }
