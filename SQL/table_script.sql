@@ -1089,11 +1089,16 @@ CREATE TABLE parent_details (
 /*script for staff_attendance*/
 CREATE TABLE staff_attendance (
     sa_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
     staff_id INT NOT NULL,
     staff_type VARCHAR(255) NOT NULL,
     designation_id INT NOT NULL,
+    department_id INT NOT NULL,
     attendance_date DATE NOT NULL,
-    attendance_status VARCHAR(255) NOT NULL
+    attendance_status VARCHAR(50) NOT NULL,
+    check_in_time TIME DEFAULT NULL,
+    check_out_time TIME DEFAULT NULL
 );
 
 CREATE TABLE exam_type(
@@ -2557,12 +2562,17 @@ BEGIN
    EXECUTE ddl_statement;
    -- Create the staff_attendance table
    ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.staff_attendance (
-   sa_id SERIAL PRIMARY KEY,
-   staff_id INT NOT NULL,
-   staff_type VARCHAR(255) NOT NULL,
-   designation_id INT NOT NULL,
-   attendance_date DATE NOT NULL,
-   attendance_status VARCHAR(255) NOT NULL
+     sa_id SERIAL PRIMARY KEY,
+     school_id INT NOT NULL,
+     session_id INT NOT NULL,
+     staff_id INT NOT NULL,
+     staff_type VARCHAR(255) NOT NULL,
+     designation_id INT NOT NULL,
+     department_id INT NOT NULL,
+     attendance_date DATE NOT NULL,
+     attendance_status VARCHAR(50) NOT NULL,
+     check_in_time TIME DEFAULT NULL,
+     check_out_time TIME DEFAULT NULL
    )';
    EXECUTE ddl_statement;
 
