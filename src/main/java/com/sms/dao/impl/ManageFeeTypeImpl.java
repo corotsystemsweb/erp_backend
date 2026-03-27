@@ -18,12 +18,13 @@ public class ManageFeeTypeImpl implements ManageFeeTypeDao {
                     SELECT
                         fs.fee_id,
                         fs.fee_type,
-                        COUNT(DISTINCT sad.student_id) AS total_students,
-                        SUM(fdd.fee_amount) AS total_amount
+                        COUNT(DISTINCT sad.student_id)  AS total_students,
+                        COALESCE(SUM(fdd.fee_amount), 0) AS total_amount
                     FROM school_fees fs
-                    JOIN fee_assignment fa ON fs.fee_id = fa.fee_id
-                    JOIN fee_due_date fdd ON fa.fa_id = fdd.fa_id
-                    JOIN student_academic_details sad
+                    LEFT JOIN fee_assignment fa ON fs.fee_id = fa.fee_id
+                        AND fa.session_id = ?
+                    LEFT JOIN fee_due_date fdd ON fa.fa_id = fdd.fa_id
+                    LEFT JOIN student_academic_details sad
                         ON sad.session_id = fa.session_id
                         AND sad.student_class_id = fa.class_id
                         AND (
@@ -31,21 +32,22 @@ public class ManageFeeTypeImpl implements ManageFeeTypeDao {
                             OR (fa.student_id IS NULL AND fa.section_id IS NOT NULL AND fa.section_id = sad.student_section_id)
                             OR (fa.student_id IS NULL AND fa.section_id IS NULL)
                         )
-                    JOIN student_personal_details spd ON sad.student_id = spd.student_id
-                    WHERE
-                        sad.session_id = ?
+                    LEFT JOIN student_personal_details spd
+                        ON sad.student_id = spd.student_id
                         AND spd.deleted IS NOT TRUE
-                        AND NOT EXISTS (
+                    WHERE
+                        NOT EXISTS (
                             SELECT 1 FROM fee_assignment_exclusion fe
                             WHERE fe.fa_id = fa.fa_id
                               AND fe.student_id = sad.student_id
                               AND (fe.valid_to IS NULL OR fe.valid_to >= CURRENT_DATE)
                         )
                         AND (
-                            (UPPER(fs.fee_type) LIKE '% - OLD'    AND sad.student_type = 'Old')
-                            OR (UPPER(fs.fee_type) LIKE '% - NEW'    AND sad.student_type = 'New')
-                            OR (UPPER(fs.fee_type) LIKE '% - MALE'   AND UPPER(spd.gender) = 'MALE')
-                            OR (UPPER(fs.fee_type) LIKE '% - FEMALE' AND UPPER(spd.gender) = 'FEMALE')
+                            sad.student_id IS NULL
+                            OR (UPPER(fs.fee_type) LIKE '% - OLD'      AND sad.student_type = 'Old')
+                            OR (UPPER(fs.fee_type) LIKE '% - NEW'      AND sad.student_type = 'New')
+                            OR (UPPER(fs.fee_type) LIKE '% - MALE'     AND UPPER(spd.gender) = 'MALE')
+                            OR (UPPER(fs.fee_type) LIKE '% - FEMALE'   AND UPPER(spd.gender) = 'FEMALE')
                             OR (
                                 UPPER(fs.fee_type) NOT LIKE '% - OLD'
                                 AND UPPER(fs.fee_type) NOT LIKE '% - NEW'
