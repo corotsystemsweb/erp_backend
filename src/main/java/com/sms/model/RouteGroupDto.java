@@ -20,5 +20,14 @@ public class RouteGroupDto {
     private String boardingPoint;
     private String destination;
     private BigDecimal maxFee;
+
     private List<RouteStopDTO> stops;
+//    -------------------------------------------------added by karan------------------
+    private String routeName;
+    private String routeCode;
+    private Double totalDistance;
+    private Integer estimatedTime;
+
+
+
 }
