@@ -253,10 +253,12 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
         }
     }
 
-
-   @Override
    public List<DriverDetails> getAllDriver(String schoolCode) throws Exception {
-       String sql = "SELECT driver_id, school_id,session_id, sd_id, first_name, last_name, dob, contact_number, license_number, address, city, state, zip_code, country from add_driver order by driver_id asc";
+       String sql = "SELECT d.driver_id, d.school_id, d.session_id, d.sd_id, d.first_name, d.last_name, d.dob, d.contact_number, d.license_number, d.address, d.city, d.state, d.zip_code, d.country, d.current_status, d.joining_date, v.vehicle_number " +
+               "FROM add_driver d " +
+               "LEFT JOIN transport_allocation t_alloc ON d.driver_id = t_alloc.driver_id " +
+               "LEFT JOIN add_vehicle v ON t_alloc.vehicle_id = v.vehicle_id " +
+               "ORDER BY d.driver_id ASC";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
        List<DriverDetails> driverDetails = null;
        try{
@@ -280,6 +282,10 @@ public DriverDetails addDriver(DriverDetails driverDetails, String schoolCode) t
                    dd.setState(rs.getString("state"));
                    dd.setZipCode(rs.getInt("zip_code"));
                    dd.setCountry(rs.getString("country"));
+//                   -------------------------------------------------------------added by karan-------------------
+                   dd.setCurrentStatus(rs.getString("current_status"));
+                   dd.setJoiningDate(rs.getDate("joining_date"));
+                   dd.setVehicleNumber(rs.getString( "vehicle_number"));
                    return dd;
                }
            });

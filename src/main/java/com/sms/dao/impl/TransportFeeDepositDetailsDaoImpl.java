@@ -1,5 +1,7 @@
 package com.sms.dao.impl;
 
+import com.sms.model.FeeDetail;
+
 import com.sms.dao.TransportFeeDepositDetailsDao;
 import com.sms.model.TransportFeeDepositDetails;
 import com.sms.util.DatabaseUtil;
@@ -51,5 +53,48 @@ public class TransportFeeDepositDetailsDaoImpl implements TransportFeeDepositDet
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
         return transportFeeDepositDetails;
+    }
+
+
+
+    @Override
+    public List<FeeDetail> findTransportFeeDetailsByTransactionId(String transactionId, int schoolId, String schoolCode) throws Exception {
+
+        String sql = """
+            SELECT
+                tfdd.due_month       AS due_date,
+                tfdd.fee_amount      AS original_amount,
+                tfdd.discount_amount AS discount_amount,
+                tfdd.penalty_amount  AS penalty_amount,
+                tfdd.amount_paid     AS amount_paid,
+                tfdd.balance         AS balance
+            FROM transport_fee_deposit tfd
+            JOIN transport_fee_deposit_details tfdd ON tfd.tfd_id = tfdd.tfd_id
+            WHERE tfd.transaction_id = ?
+              AND tfd.school_id = ?
+            """;
+
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try {
+            return jdbcTemplate.query(sql, new Object[]{transactionId, schoolId},
+                    (rs, rowNum) -> {
+                        FeeDetail fd = new FeeDetail();
+                        fd.setFeeType("Transport Fee");
+                        fd.setDueDate(rs.getDate("due_date"));
+                        fd.setOriginalAmount(rs.getDouble("original_amount"));
+                        fd.setDiscountDescription("No Discount");
+                        fd.setDiscountRate("0 Rs");
+                        fd.setDiscountAmount(rs.getDouble("discount_amount"));
+                        fd.setPenaltyAmount(rs.getDouble("penalty_amount"));
+                        fd.setAmountPaid(rs.getDouble("amount_paid"));
+                        fd.setBalance(rs.getDouble("balance"));
+                        return fd;
+                    });
+        } catch (Exception e) {
+            throw new Exception("Error fetching transport fee details for transactionId: "
+                    + transactionId, e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
     }
 }

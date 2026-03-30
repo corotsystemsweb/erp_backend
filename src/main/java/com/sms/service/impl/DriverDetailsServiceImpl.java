@@ -53,6 +53,7 @@ public class DriverDetailsServiceImpl implements DriverDetailsService {
         return driverDetailsDao.updateDriverDetails(driverDetails, driverId, schoolCode);
     }
 
+
     @Override
     public boolean deleteDriver(int driverId, String schoolCode) throws Exception {
         return driverDetailsDao.deleteDriver(driverId, schoolCode);

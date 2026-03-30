@@ -1,5 +1,6 @@
 package com.sms.service.impl;
-
+import com.sms.model.FeeDetail;
+import java.util.Collections;
 import com.sms.dao.*;
 import com.sms.model.*;
 import com.sms.service.FeeDepositDetailsService;
@@ -50,9 +51,16 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
     public CombinedFeeDepositResponse addFeeDepositDetails(FeeDepositRequest feeDepositRequest, String schoolCode) throws Exception {
         CombinedFeeDepositResponse response = new CombinedFeeDepositResponse();
         // Calculate the total amount
+//        double totalAmount = feeDepositRequest.getFeeDetails().stream()
+//                .mapToDouble(FeeDepositDetails::getAmountPaid)
+//                .sum();
         double totalAmount = feeDepositRequest.getFeeDetails().stream()
                 .mapToDouble(FeeDepositDetails::getAmountPaid)
                 .sum();
+
+// ✅ If transport-only payment (no academic fees), skip academic fee deposit creation
+        boolean isTransportOnly = feeDepositRequest.getFeeDetails() == null
+                || feeDepositRequest.getFeeDetails().isEmpty();
 
         // Create a new FeeDeposit entry
         FeeDepositDetails feeDeposit = new FeeDepositDetails();
@@ -70,22 +78,39 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
         feeDeposit.setComment(feeDepositRequest.getComment());
         feeDeposit.setFddStatus(feeDepositRequest.getStatus());
         feeDeposit.setPaymentDate(feeDepositRequest.getPaymentDate());
-      //  feeDeposit.setAdditionalDiscount(feeDepositRequest.getAdditionalDiscount());
-      //  feeDeposit.setAdditionalDiscountReason(feeDepositRequest.getAdditionalDiscountReason());
+        //  feeDeposit.setAdditionalDiscount(feeDepositRequest.getAdditionalDiscount());
+        //  feeDeposit.setAdditionalDiscountReason(feeDepositRequest.getAdditionalDiscountReason());
         // Insert into fee_deposit
-        FeeDepositDetails insertedFeeDeposit = feeDepositDao.addFeeDeposit(feeDeposit, schoolCode);
+//        FeeDepositDetails insertedFeeDeposit = feeDepositDao.addFeeDeposit(feeDeposit, schoolCode);
+//
+//        // Set the fd_id for each feeDepositDetails entry
+//        for (FeeDepositDetails detail : feeDepositRequest.getFeeDetails()) {
+//            detail.setFdId(insertedFeeDeposit.getFdId());
+//            detail.setApprovedBy(feeDepositRequest.getApprovedBy());
+//            detail.setPaymentReceivedBy(feeDepositRequest.getPaymentReceivedBy());
+//        }
+//
+//        // Insert into fee_deposit_details
+//        List<FeeDepositDetails> addedDetails = feeDepositDetailsDao.addFeeDepositDetails(feeDepositRequest.getFeeDetails(), schoolCode);
+//
+//        response.setAcademicFeeDetails(addedDetails);
 
-        // Set the fd_id for each feeDepositDetails entry
-        for (FeeDepositDetails detail : feeDepositRequest.getFeeDetails()) {
-            detail.setFdId(insertedFeeDeposit.getFdId());
-            detail.setApprovedBy(feeDepositRequest.getApprovedBy());
-            detail.setPaymentReceivedBy(feeDepositRequest.getPaymentReceivedBy());
+        if (!isTransportOnly) {
+            FeeDepositDetails insertedFeeDeposit = feeDepositDao.addFeeDeposit(feeDeposit, schoolCode);
+
+            for (FeeDepositDetails detail : feeDepositRequest.getFeeDetails()) {
+                detail.setFdId(insertedFeeDeposit.getFdId());
+                detail.setApprovedBy(feeDepositRequest.getApprovedBy());
+                detail.setPaymentReceivedBy(feeDepositRequest.getPaymentReceivedBy());
+            }
+
+            List<FeeDepositDetails> addedDetails = feeDepositDetailsDao
+                    .addFeeDepositDetails(feeDepositRequest.getFeeDetails(), schoolCode);
+            response.setAcademicFeeDetails(addedDetails);
+        } else {
+            // ✅ Transport-only: set empty list so frontend knows
+            response.setAcademicFeeDetails(Collections.emptyList());
         }
-
-        // Insert into fee_deposit_details
-        List<FeeDepositDetails> addedDetails = feeDepositDetailsDao.addFeeDepositDetails(feeDepositRequest.getFeeDetails(), schoolCode);
-
-        response.setAcademicFeeDetails(addedDetails);
 
         // 2 OPTIONAL TRANSPORT INSERT
         if(feeDepositRequest.getTransportFeeDepositDetails() != null && !feeDepositRequest.getTransportFeeDepositDetails().isEmpty()){
@@ -122,6 +147,8 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
             List<TransportFeeDepositDetails> addDetails = transportFeeDepositDetailsDao.addTransportFeeDepositDetails(feeDepositRequest.getTransportFeeDepositDetails(), schoolCode);
             // Set Transport Response
             response.setTransportFeeDetails(addDetails);
+            // ✅ For transport-only: expose tfd_id so frontend can navigate to receipt
+            response.setTfdId(transportFeeDepositDetails.getTfdId());
         }
         return response;
     }
@@ -177,7 +204,38 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
     @Override
     public List<FeeDepositDetails> getFeeDepositDetails(int fdId, int schoolId, String schoolCode) throws Exception {
         // return feeDepositDetailsDao.findFeeDepositDetailsById(fdId,schoolId,schoolCode);
+//        List<FeeDepositDetails> feeDeposits = feeDepositDetailsDao.findFeeDepositDetailsById(fdId, schoolId, schoolCode);
+
         List<FeeDepositDetails> feeDeposits = feeDepositDetailsDao.findFeeDepositDetailsById(fdId, schoolId, schoolCode);
+
+// ✅ TRANSPORT-ONLY FALLBACK: if no academic fee found, check transport table
+        if (feeDeposits == null || feeDeposits.isEmpty()) {
+            try {
+                // fdId is actually academic fee ID, but we need to check if it could be tfd_id
+                // Try to find if this ID exists in transport_fee_deposit table
+                String checkSql = "SELECT tfd_id FROM transport_fee_deposit WHERE tfd_id = ? AND school_id = ?";
+                org.springframework.jdbc.core.JdbcTemplate jt =
+                        com.sms.util.DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+                Integer tfdId = null;
+                try {
+                    tfdId = jt.queryForObject(checkSql, Integer.class, fdId, schoolId);
+                } catch (Exception ex) {
+                    // Not a transport ID
+                } finally {
+                    com.sms.util.DatabaseUtil.closeDataSource(jt);
+                }
+
+                if (tfdId != null) {
+                    FeeDepositDetails transportReceipt = buildTransportOnlyReceipt(tfdId, schoolId, schoolCode);
+                    if (transportReceipt != null) {
+                        feeDeposits = new ArrayList<>();
+                        feeDeposits.add(transportReceipt);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         // 2. Fetch school details and image
         SchoolDetails schoolDetails = schoolDao.getSchoolDetailsById(schoolId, schoolCode); // Assume this method exists
@@ -188,14 +246,65 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
             schoolDetails.setSchoolImageString(null); // Handle missing image gracefully
         }
 
+//        // 3. Attach school data to each fee deposit entry
+//        for (FeeDepositDetails deposit : feeDeposits) {
+//            deposit.setSchoolName(schoolDetails.getSchoolName());
+//            deposit.setSchoolAddress(schoolDetails.getSchoolAddress());
+//            deposit.setSchoolImage(schoolDetails.getSchoolImageString());
+//            // Add other school fields as needed
+//        }
+//
+//
+//
+//        return feeDeposits;
+
+
         // 3. Attach school data to each fee deposit entry
         for (FeeDepositDetails deposit : feeDeposits) {
             deposit.setSchoolName(schoolDetails.getSchoolName());
             deposit.setSchoolAddress(schoolDetails.getSchoolAddress());
             deposit.setSchoolImage(schoolDetails.getSchoolImageString());
-            // Add other school fields as needed
-        }
 
+            // ✅ Skip transport merge if this is a transport-only receipt
+            // (buildTransportOnlyReceipt already set feeDetail correctly)
+            boolean isTransportOnly = deposit.getFeeDetail() != null
+                    && !deposit.getFeeDetail().isEmpty()
+                    && deposit.getFeeDetail().stream()
+                    .allMatch(f -> f.getFeeType() != null && "Transport".equals(f.getFeeType()));
+
+            boolean transportAlreadyIncluded = deposit.getFeeDetail() != null
+                    && deposit.getFeeDetail().stream()
+                    .anyMatch(f -> "Transport Fee".equals(f.getFeeType()));
+
+            if (!isTransportOnly && !transportAlreadyIncluded) {
+                String transactionId = deposit.getTransactionId();
+                if (transactionId != null && !transactionId.isEmpty()) {
+                    try {
+                        List<FeeDetail> transportFeeDetails =
+                                transportFeeDepositDetailsDao.findTransportFeeDetailsByTransactionId(
+                                        transactionId, schoolId, schoolCode
+                                );
+
+                        if (transportFeeDetails != null && !transportFeeDetails.isEmpty()) {
+                            List<FeeDetail> allFeeDetails = new ArrayList<>(
+                                    deposit.getFeeDetail() != null
+                                            ? deposit.getFeeDetail()
+                                            : Collections.emptyList()
+                            );
+                            allFeeDetails.addAll(transportFeeDetails);
+                            deposit.setFeeDetail(allFeeDetails);
+
+                            double transportTotal = transportFeeDetails.stream()
+                                    .mapToDouble(FeeDetail::getAmountPaid)
+                                    .sum();
+                            deposit.setTotalPaid(deposit.getTotalPaid() + transportTotal);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
         return feeDeposits;
     }
 
@@ -358,6 +467,128 @@ public class FeeDepositDetailsServiceImpl implements FeeDepositDetailsService {
         finalResponse.put("months", monthWiseResponse);
 
         return finalResponse;
+    }
+
+
+
+    private FeeDepositDetails buildTransportOnlyReceipt(int tfdId, int schoolId, String schoolCode) throws Exception {
+
+        // 1. Fetch the transport_fee_deposit header row using tfd_id
+        String sql = """
+        SELECT tfd_id, student_id, session_id, class_id,
+               section_id, transaction_id, payment_date,
+               total_amount_paid, payment_mode
+        FROM transport_fee_deposit
+        WHERE tfd_id = ?
+          AND school_id = ?
+        """;
+        org.springframework.jdbc.core.JdbcTemplate jt =
+                com.sms.util.DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+
+        FeeDepositDetails receipt;
+        try {
+            receipt = jt.queryForObject(sql, new Object[]{tfdId, schoolId},
+                    (rs, rowNum) -> {
+                        FeeDepositDetails d = new FeeDepositDetails();
+                        d.setStudentId(rs.getInt("student_id"));
+                        d.setSessionId(rs.getInt("session_id"));
+                        d.setClassId(rs.getInt("class_id"));
+                        d.setSectionId(rs.getInt("section_id"));
+                        d.setTransactionId(rs.getString("transaction_id"));
+                        d.setTotalPaid(rs.getDouble("total_amount_paid"));
+                        d.setPaymentMode(rs.getInt("payment_mode"));
+                        java.sql.Timestamp paymentDate = rs.getTimestamp("payment_date");
+                        if (paymentDate != null) {
+                            d.setFormattedPaymentDate(
+                                    new java.text.SimpleDateFormat("dd MMM yyyy")
+                                            .format(paymentDate)
+                            );
+                            d.setPaymentDate(paymentDate);
+                        }
+                        return d;
+
+                    });
+
+        } catch (Exception e) {
+            return null; // tfdId not found in transport table either
+        } finally {
+            com.sms.util.DatabaseUtil.closeDataSource(jt);
+        }
+
+        if (receipt == null) return null;
+
+// 2. Attach school info
+        SchoolDetails schoolDetails = schoolDao.getSchoolDetailsById(schoolId, schoolCode);
+        try {
+            SchoolDetails imageDetails = schoolDao.getImage(schoolCode, schoolId);
+            schoolDetails.setSchoolImageString(imageDetails.getSchoolImageString());
+        } catch (Exception e) {
+            schoolDetails.setSchoolImageString(null);
+        }
+        receipt.setSchoolName(schoolDetails.getSchoolName());
+        receipt.setSchoolAddress(schoolDetails.getSchoolAddress());
+        receipt.setSchoolImage(schoolDetails.getSchoolImageString());
+
+// 3. ✅ Fetch student name, class, section, session using student_id
+        // 3. ✅ Fetch student name, class, section, session using tfd_id directly
+        org.springframework.jdbc.core.JdbcTemplate jt2 =
+                com.sms.util.DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try {
+            String studentSql = """
+    SELECT 
+        spd.first_name || ' ' || spd.last_name AS student_name,
+        sad.admission_no,
+        spd.gender,
+        c.class_name, 
+        s.section_name,
+        ses.academic_session as session_name
+    FROM student_academic_details sad
+    LEFT JOIN student_personal_details spd 
+        ON spd.student_id = sad.student_id 
+        AND spd.school_id = sad.school_id
+    LEFT JOIN mst_class c 
+        ON sad.student_class_id = c.class_id
+    LEFT JOIN mst_section s 
+        ON sad.student_section_id = s.section_id
+    LEFT JOIN session ses 
+        ON sad.session_id = ses.session_id
+    WHERE sad.student_id = ?
+      AND sad.session_id = ?
+      AND sad.school_id = ?
+    """;
+
+
+
+
+
+            jt2.queryForObject(studentSql,
+                    new Object[]{receipt.getStudentId(), receipt.getSessionId(), schoolId},
+                    (rs, rowNum) -> {
+                        receipt.setStudentName(rs.getString("student_name"));
+                        receipt.setAdmissionNumber(rs.getString("admission_no"));
+                        receipt.setGender(rs.getString("gender"));
+                        receipt.setClassName(rs.getString("class_name"));
+                        receipt.setSectionName(rs.getString("section_name"));
+                        receipt.setSessionName(rs.getString("session_name"));
+                        return null;
+                    });
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            com.sms.util.DatabaseUtil.closeDataSource(jt2);
+        }
+
+// 4. Fetch transport fee detail rows
+        List<FeeDetail> transportFeeDetails =
+                transportFeeDepositDetailsDao.findTransportFeeDetailsByTransactionId(
+                        receipt.getTransactionId(), schoolId, schoolCode
+                );
+        receipt.setFeeDetail(transportFeeDetails != null ? transportFeeDetails : new ArrayList<>());
+
+        return receipt;
     }
 }
 

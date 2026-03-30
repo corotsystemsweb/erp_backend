@@ -42,6 +42,15 @@ public class DriverDetails {
     // After currentStatusComment field:
     private String bloodGroup;
     private String emergencyContact;
+    private String vehicleNumber;
+
+    public String getVehicleNumber() {
+        return vehicleNumber;
+    }
+
+    public void setVehicleNumber(String vehicleNumber) {
+        this.vehicleNumber = vehicleNumber;
+    }
 
     // After getCurrentStatusComment() getter/setter:
     public String getBloodGroup() {

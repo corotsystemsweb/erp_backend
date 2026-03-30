@@ -106,7 +106,14 @@ public class AddVehicleDetailsDaoImpl implements AddVehicleDetailsDao {
     }
    @Override
    public List<AddVehicleDetails> getAllVehicle(String schoolCode) throws Exception {
-       String sql = "select vehicle_id, school_id, vehicle_number, vehicle_type, number_of_seat, refuel_amount, last_insurance_date, renewal_insurance_date, last_service_date , model, manufacturer, year_of_manufacture, registration_date, fitness_expiry, status from add_vehicle order by vehicle_id asc";
+       String sql = "SELECT v.vehicle_id, v.school_id, v.vehicle_number, v.vehicle_type, v.number_of_seat, v.refuel_amount, v.last_insurance_date, v.renewal_insurance_date, v.last_service_date, v.model, v.manufacturer, v.year_of_manufacture, v.registration_date, v.fitness_expiry, v.status, " +
+               "d.first_name || ' ' || d.last_name AS driver_name, " +
+               "r.boarding_point || ' - ' || r.destination AS route_name " +
+               "FROM add_vehicle v " +
+               "LEFT JOIN transport_allocation ta ON v.vehicle_id = ta.vehicle_id " +
+               "LEFT JOIN add_driver d ON ta.driver_id = d.driver_id " +
+               "LEFT JOIN add_route r ON ta.route_id = r.route_id " +
+               "ORDER BY v.vehicle_id ASC";
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
        List<AddVehicleDetails> addVehicleDetails = null;
        try{
@@ -131,6 +138,9 @@ public class AddVehicleDetailsDaoImpl implements AddVehicleDetailsDao {
                    avd.setRegistrationDate(rs.getDate("registration_date"));
                    avd.setFitnessExpiry(rs.getDate("fitness_expiry"));
                    avd.setStatus(rs.getString("status"));
+
+                   avd.setDriverName(rs.getString("driver_name"));
+                   avd.setRouteName(rs.getString("route_name"));
                    return avd;
 
                }

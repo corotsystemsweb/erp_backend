@@ -1353,6 +1353,8 @@ public class FeeDepositDetailsDaoImpl implements FeeDepositDetailsDao {
                                   fd.transaction_id,
                                   fd.payment_date,
                                   fd.total_amount_paid,
+                                  fd.payment_mode,
+                                  
                                   pm.payment_type,
                                   json_agg(
                                       DISTINCT jsonb_build_object(
@@ -1428,7 +1430,9 @@ public class FeeDepositDetailsDaoImpl implements FeeDepositDetailsDao {
                                   sad.admission_no,sad.roll_number, spd.gender, mc.class_name,
                                   ms.section_name, s.academic_session,
                                   fd.transaction_id, fd.payment_date,
-                                  fd.total_amount_paid, pm.payment_type;
+                                fd.total_amount_paid,
+                                fd.payment_mode,   
+                                pm.payment_type;
                """;
 
        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
@@ -1461,6 +1465,7 @@ public class FeeDepositDetailsDaoImpl implements FeeDepositDetailsDao {
                    }
 
                    details.setTotalPaid(rs.getDouble("total_amount_paid"));
+                   details.setPaymentMode(rs.getInt("payment_mode"));
                    details.setPaymentType(rs.getString("payment_type"));
 
                    // JSON Handling
