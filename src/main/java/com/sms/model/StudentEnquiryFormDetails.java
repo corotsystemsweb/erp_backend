@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StudentEnquiryFormDetails {
-    private Integer id;
+    private Integer studentEnquiryId;
 
     // ===== BASIC DETAILS =====
     private String srNo;

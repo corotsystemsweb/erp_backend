@@ -5,9 +5,12 @@ import com.sms.dao.StudentEnquiryFormDao;
 import com.sms.exception.ImageSizeLimitExceededException;
 import com.sms.model.StudentDetails;
 import com.sms.model.StudentEnquiryFormDetails;
+import com.sms.model.StudentEnquirySiblings;
+import com.sms.model.StudentEnquirySubjects;
 import com.sms.util.DatabaseUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -16,12 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 
 @Repository
 public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
@@ -204,8 +203,13 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                 return ps;
             }, keyHolder);
             Map<String, Object> keys = keyHolder.getKeys();
-            if (keys != null && keys.containsKey("id")) {
-                studentEnquiryFormDetails.setId(((Number) keys.get("id")).intValue());
+            if (keys != null && keys.containsKey("student_enquiry_id")) {
+                int generatedId = ((Number) keys.get("student_enquiry_id")).intValue();
+                studentEnquiryFormDetails.setStudentEnquiryId(generatedId);
+
+                // Set sr_no same as student_enquiry_id
+                String updateSql = "UPDATE student_enquiry_form SET sr_no = ? WHERE student_enquiry_id = ?";
+                jdbcTemplate.update(updateSql, String.valueOf(generatedId), generatedId);
             }
 
         } catch (Exception e){
@@ -216,4 +220,145 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
         }
         return studentEnquiryFormDetails;
     }
+
+    @Override
+    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String schoolCode) throws Exception {
+        String sql = """
+                SELECT student_enquiry_id, sr_no, admission_date, admission_no, class_sought, session, pen, apaar_id, student_name, gender,
+                dob, dob_in_words, mother_name, mother_phone, mother_qualification, mother_email, mother_occupation, mother_local_address,
+                mother_residential_address, mother_annual_income, father_name, father_phone, father_qualification, father_email, father_occupation,
+                father_local_address, father_residential_address, father_annual_income, guardian_name, guardian_phone, guardian_qualification,
+                guardian_email, guardian_occupation, guardian_local_address, guardian_residential_address, guardian_annual_income,
+                is_single_girl_child, is_specially_abled, category, religion, aadhar_number, last_school_name, last_school_address,
+                last_class_attended, last_school_board, last_class_result, transfer_certificate_number, tc_date_of_issue, siblings, subjects,
+                declaration_text, declaration_date, place, parent_signature, relationship_with_candidate, principal_signature, register_page_no,
+                register_entry_date, created_at, updated_at FROM student_enquiry_form
+                """;
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        List<StudentEnquiryFormDetails> studentEnquiryFormDetails = null;
+
+        try{
+            studentEnquiryFormDetails = jdbcTemplate.query(sql, new RowMapper<StudentEnquiryFormDetails>() {
+                @Override
+                public StudentEnquiryFormDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    StudentEnquiryFormDetails sed = new StudentEnquiryFormDetails();
+                    // ===== BASIC =====
+                    sed.setStudentEnquiryId(rs.getInt("student_enquiry_id"));
+                    sed.setSrNo(rs.getString("sr_no"));
+                    sed.setAdmissionDate(rs.getString("admission_date"));
+                    sed.setAdmissionNo(rs.getString("admission_no"));
+                    sed.setClassSought(rs.getString("class_sought"));
+                    sed.setSession(rs.getString("session"));
+                    sed.setPen(rs.getString("pen"));
+                    sed.setApaarId(rs.getString("apaar_id"));
+
+                    // ===== PERSONAL =====
+                    sed.setStudentName(rs.getString("student_name"));
+                    sed.setGender(rs.getString("gender"));
+                    sed.setDob(rs.getString("dob"));
+                    sed.setDobInWords(rs.getString("dob_in_words"));
+
+                    // ===== MOTHER =====
+                    sed.setMotherName(rs.getString("mother_name"));
+                    sed.setMotherPhone(rs.getString("mother_phone"));
+                    sed.setMotherQualification(rs.getString("mother_qualification"));
+                    sed.setMotherEmail(rs.getString("mother_email"));
+                    sed.setMotherOccupation(rs.getString("mother_occupation"));
+                    sed.setMotherLocalAddress(rs.getString("mother_local_address"));
+                    sed.setMotherResidentialAddress(rs.getString("mother_residential_address"));
+                    sed.setMotherAnnualIncome(rs.getBigDecimal("mother_annual_income"));
+
+                    // ===== FATHER =====
+                    sed.setFatherName(rs.getString("father_name"));
+                    sed.setFatherPhone(rs.getString("father_phone"));
+                    sed.setFatherQualification(rs.getString("father_qualification"));
+                    sed.setFatherEmail(rs.getString("father_email"));
+                    sed.setFatherOccupation(rs.getString("father_occupation"));
+                    sed.setFatherLocalAddress(rs.getString("father_local_address"));
+                    sed.setFatherResidentialAddress(rs.getString("father_residential_address"));
+                    sed.setFatherAnnualIncome(rs.getBigDecimal("father_annual_income"));
+
+                    // ===== GUARDIAN =====
+                    sed.setGuardianName(rs.getString("guardian_name"));
+                    sed.setGuardianPhone(rs.getString("guardian_phone"));
+                    sed.setGuardianQualification(rs.getString("guardian_qualification"));
+                    sed.setGuardianEmail(rs.getString("guardian_email"));
+                    sed.setGuardianOccupation(rs.getString("guardian_occupation"));
+                    sed.setGuardianLocalAddress(rs.getString("guardian_local_address"));
+                    sed.setGuardianResidentialAddress(rs.getString("guardian_residential_address"));
+                    sed.setGuardianAnnualIncome(rs.getBigDecimal("guardian_annual_income"));
+
+                    // ===== STATUS =====
+                    sed.setIsSingleGirlChild(rs.getBoolean("is_single_girl_child"));
+                    sed.setIsSpeciallyAbled(rs.getBoolean("is_specially_abled"));
+
+                    // ===== CATEGORY =====
+                    sed.setCategory(rs.getString("category"));
+                    sed.setReligion(rs.getString("religion"));
+
+                    // ===== AADHAR =====
+                    sed.setAadharNumber(rs.getString("aadhar_number"));
+
+                    // ===== LAST SCHOOL =====
+                    sed.setLastSchoolName(rs.getString("last_school_name"));
+                    sed.setLastSchoolAddress(rs.getString("last_school_address"));
+                    sed.setLastClassAttended(rs.getString("last_class_attended"));
+                    sed.setLastSchoolBoard(rs.getString("last_school_board"));
+
+                    // ===== RESULT =====
+                    sed.setLastClassResult(rs.getString("last_class_result"));
+
+                    // ===== TC =====
+                    sed.setTransferCertificateNumber(rs.getString("transfer_certificate_number"));
+                    sed.setTcDateOfIssue(rs.getString("tc_date_of_issue"));
+
+                    // ===== SIBLINGS =====
+                    String siblingsJson = rs.getString("siblings");
+                    if (siblingsJson != null && !siblingsJson.isEmpty()) {
+                        try {
+                            sed.setSiblings(Arrays.asList(objectMapper.readValue(siblingsJson, StudentEnquirySiblings[].class)));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error parsing siblings JSON", e);
+                        }
+                    }
+
+                    // ===== SUBJECTS =====
+                    String subjectsJson = rs.getString("subjects");
+                    if (subjectsJson != null && !subjectsJson.isEmpty()) {
+                        try {
+                            sed.setSubjects(Arrays.asList(objectMapper.readValue(subjectsJson, StudentEnquirySubjects[].class)));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error parsing subjects JSON", e);
+                        }
+                    }
+
+                    // ===== DECLARATION =====
+                    sed.setDeclarationText(rs.getString("declaration_text"));
+                    sed.setDeclarationDate(rs.getString("declaration_date"));
+                    sed.setPlace(rs.getString("place"));
+                    sed.setParentSignature(rs.getString("parent_signature"));
+                    sed.setRelationshipWithCandidate(rs.getString("relationship_with_candidate"));
+                    sed.setPrincipalSignature(rs.getString("principal_signature"));
+
+                    // ===== OFFICE =====
+                    sed.setRegisterPageNo(rs.getString("register_page_no"));
+                    sed.setRegisterEntryDate(rs.getString("register_entry_date"));
+
+                    // ===== SYSTEM =====
+                    sed.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    sed.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+
+                    return sed;
+
+                }
+            });
+        } catch (Exception e){
+            throw new Exception("Error fetching student enquiry data: " + e.getMessage(), e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+        return studentEnquiryFormDetails;
+    }
+
+
 }

@@ -1407,7 +1407,7 @@ CREATE TABLE timetable (
 /* Script for student_enquiry_form */
 CREATE TABLE student_enquiry_form (
 
-    id SERIAL PRIMARY KEY,
+    student_enquiry_id SERIAL PRIMARY KEY,
 
     -- ===== BASIC DETAILS =====
     sr_no VARCHAR(50),
@@ -2917,7 +2917,7 @@ BEGIN
        )';
 
        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.student_enquiry_form (
-            id SERIAL PRIMARY KEY,
+            student_enquiry_id SERIAL PRIMARY KEY,
 
             -- ===== BASIC DETAILS =====
             sr_no VARCHAR(50),
