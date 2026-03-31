@@ -17,6 +17,12 @@ public class AddRouteDetails {
     private Date startDate;
     private Date endDate;
     private String hashValue;
+    //-------------------------------added new fields according to frontend ------------------
+    private String routeName;
+    private String routeCode;
+    private Double totalDistance;
+    private Integer estimatedTime;
+
 
     public int getRouteId() {
         return routeId;
@@ -121,4 +127,38 @@ public class AddRouteDetails {
     public void setHashValue(String hashValue) {
         this.hashValue = hashValue;
     }
+
+    //--------------added by karan --------------------------------------------------------------
+
+    public String getRouteName() {
+        return routeName;
+    }
+
+    public void setRouteName(String routeName) {
+        this.routeName = routeName;
+    }
+
+    public String getRouteCode() {
+        return routeCode;
+    }
+
+    public void setRouteCode(String routeCode) {
+        this.routeCode = routeCode;
+    }
+    public Double getTotalDistance() {
+        return totalDistance;
+    }
+
+    public void setTotalDistance(Double totalDistance) {
+        this.totalDistance = totalDistance;
+    }
+
+    public Integer getEstimatedTime() {
+        return estimatedTime;
+    }
+
+    public void setEstimatedTime(Integer estimatedTime) {
+        this.estimatedTime = estimatedTime;
+    }
+
 }

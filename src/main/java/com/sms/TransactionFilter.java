@@ -50,7 +50,7 @@ public class TransactionFilter implements Filter {
         }*/
 
         // CORS headers
-        res.setHeader("Access-Control-Allow-Origin", "http://localhost:3006");
+        res.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
         //res.setHeader("Access-Control-Allow-Origin", "https://erp.medhapro.com:3006");
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
         res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
