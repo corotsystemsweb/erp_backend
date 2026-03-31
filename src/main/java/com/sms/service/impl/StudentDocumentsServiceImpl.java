@@ -17,8 +17,8 @@ public class StudentDocumentsServiceImpl implements StudentDocumentsService {
     @Value("${student.documents.local.path}")
     private String FOLDER_PATH;
 
-    private static final long MAX_SIZE = 100 * 1024; //100 KB
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png");
+    private static final long MAX_SIZE = 1024 * 1024; //1 MB
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "pdf");
 
     @Override
     public boolean uploadDocuments(Map<String, MultipartFile> documents, int studentId, String schoolCode) throws Exception {
@@ -40,7 +40,7 @@ public class StudentDocumentsServiceImpl implements StudentDocumentsService {
 
             // size validation
             if(file.getSize() > MAX_SIZE){
-                throw new IllegalArgumentException(entry.getKey() + " exceeds maximum size of 100KB");
+                throw new IllegalArgumentException(entry.getKey() + " exceeds maximum size of 1MB");
             }
 
             String originalFilename = file.getOriginalFilename();
@@ -52,7 +52,7 @@ public class StudentDocumentsServiceImpl implements StudentDocumentsService {
 
             // Extension validation
             if (!ALLOWED_EXTENSIONS.contains(extension)) {
-                throw new IllegalArgumentException("Only JPG, JPEG, PNG allowed for " + entry.getKey());
+                throw new IllegalArgumentException("Only JPG, JPEG, PNG, PDF allowed for " + entry.getKey());
             }
 
             // Convert key to snake_case
@@ -81,7 +81,7 @@ public class StudentDocumentsServiceImpl implements StudentDocumentsService {
         if (!baseDir.exists()) {
             return documentMap;
         }
-        File[] files = baseDir.listFiles((dir, name) -> name.endsWith("_" + studentId + ".jpg") || name.endsWith("_" + studentId + ".jpeg") || name.endsWith("_" + studentId + ".png"));
+        File[] files = baseDir.listFiles((dir, name) -> name.endsWith("_" + studentId + ".jpg") || name.endsWith("_" + studentId + ".jpeg") || name.endsWith("_" + studentId + ".png") || name.endsWith("_" + studentId + ".pdf"));
 
         if (files == null) {
             return documentMap;
