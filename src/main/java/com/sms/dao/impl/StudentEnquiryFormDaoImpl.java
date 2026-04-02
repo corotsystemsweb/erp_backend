@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Repository
@@ -76,11 +77,11 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                 "is_single_girl_child, is_specially_abled," +
                 "category, religion, aadhar_number," +
                 "last_school_name, last_school_address, last_class_attended, last_school_board," +
-                "last_class_result, transfer_certificate_number, tc_date_of_issue," +
+                "last_class_result, transfer_certificate_number, tc_date_of_issue, status," +
                 "siblings, subjects," +
                 "declaration_text, declaration_date, place, parent_signature, relationship_with_candidate, principal_signature," +
                 "register_page_no, register_entry_date" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
@@ -176,29 +177,31 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                 else
                     ps.setNull(47, Types.DATE);
 
+                ps.setString(48, studentEnquiryFormDetails.getStatus());
+
                 // ===== JSONB =====
-                ps.setObject(48, siblingsJson, Types.OTHER);
-                ps.setObject(49, subjectsJson, Types.OTHER);
+                ps.setObject(49, siblingsJson, Types.OTHER);
+                ps.setObject(50, subjectsJson, Types.OTHER);
 
                 // ===== DECLARATION =====
-                ps.setString(50, studentEnquiryFormDetails.getDeclarationText());
+                ps.setString(51, studentEnquiryFormDetails.getDeclarationText());
                 // Declaration Date
                 if (studentEnquiryFormDetails.getDeclarationDate() != null)
-                    ps.setDate(51, java.sql.Date.valueOf(studentEnquiryFormDetails.getDeclarationDate()));
+                    ps.setDate(52, java.sql.Date.valueOf(studentEnquiryFormDetails.getDeclarationDate()));
                 else
-                    ps.setNull(51, Types.DATE);
-                ps.setString(52, studentEnquiryFormDetails.getPlace());
-                ps.setString(53, studentEnquiryFormDetails.getParentSignature());
-                ps.setString(54, studentEnquiryFormDetails.getRelationshipWithCandidate());
-                ps.setString(55, studentEnquiryFormDetails.getPrincipalSignature());
+                    ps.setNull(52, Types.DATE);
+                ps.setString(53, studentEnquiryFormDetails.getPlace());
+                ps.setString(54, studentEnquiryFormDetails.getParentSignature());
+                ps.setString(55, studentEnquiryFormDetails.getRelationshipWithCandidate());
+                ps.setString(56, studentEnquiryFormDetails.getPrincipalSignature());
 
                 // ===== OFFICE =====
-                ps.setString(56, studentEnquiryFormDetails.getRegisterPageNo());
+                ps.setString(57, studentEnquiryFormDetails.getRegisterPageNo());
                 // Register Entry Date
                 if (studentEnquiryFormDetails.getRegisterEntryDate() != null)
-                    ps.setDate(57, java.sql.Date.valueOf(studentEnquiryFormDetails.getRegisterEntryDate()));
+                    ps.setDate(58, java.sql.Date.valueOf(studentEnquiryFormDetails.getRegisterEntryDate()));
                 else
-                    ps.setNull(57, Types.DATE);
+                    ps.setNull(58, Types.DATE);
 
                 return ps;
             }, keyHolder);
@@ -230,9 +233,9 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                 father_local_address, father_residential_address, father_annual_income, guardian_name, guardian_phone, guardian_qualification,
                 guardian_email, guardian_occupation, guardian_local_address, guardian_residential_address, guardian_annual_income,
                 is_single_girl_child, is_specially_abled, category, religion, aadhar_number, last_school_name, last_school_address,
-                last_class_attended, last_school_board, last_class_result, transfer_certificate_number, tc_date_of_issue, siblings, subjects,
+                last_class_attended, last_school_board, last_class_result, transfer_certificate_number, tc_date_of_issue, status, siblings, subjects,
                 declaration_text, declaration_date, place, parent_signature, relationship_with_candidate, principal_signature, register_page_no,
-                register_entry_date, created_at, updated_at FROM student_enquiry_form
+                register_entry_date, created_at, updated_at FROM student_enquiry_form ORDER BY student_enquiry_id ASC
                 """;
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<StudentEnquiryFormDetails> studentEnquiryFormDetails = null;
@@ -312,6 +315,8 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                     sed.setTransferCertificateNumber(rs.getString("transfer_certificate_number"));
                     sed.setTcDateOfIssue(rs.getString("tc_date_of_issue"));
 
+                    sed.setStatus(rs.getString("status"));
+
                     // ===== SIBLINGS =====
                     String siblingsJson = rs.getString("siblings");
                     if (siblingsJson != null && !siblingsJson.isEmpty()) {
@@ -358,6 +363,267 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
         return studentEnquiryFormDetails;
+    }
+
+    @Override
+    public StudentEnquiryFormDetails getStudentEnquiryById(int studentEnquiryId, String schoolCode) throws Exception {
+        String sql = """
+                SELECT student_enquiry_id, sr_no, admission_date, admission_no, class_sought, session, pen, apaar_id, student_name, gender,
+                dob, dob_in_words, mother_name, mother_phone, mother_qualification, mother_email, mother_occupation, mother_local_address,
+                mother_residential_address, mother_annual_income, father_name, father_phone, father_qualification, father_email, father_occupation,
+                father_local_address, father_residential_address, father_annual_income, guardian_name, guardian_phone, guardian_qualification,
+                guardian_email, guardian_occupation, guardian_local_address, guardian_residential_address, guardian_annual_income,
+                is_single_girl_child, is_specially_abled, category, religion, aadhar_number, last_school_name, last_school_address,
+                last_class_attended, last_school_board, last_class_result, transfer_certificate_number, tc_date_of_issue, status, siblings, subjects,
+                declaration_text, declaration_date, place, parent_signature, relationship_with_candidate, principal_signature, register_page_no,
+                register_entry_date, created_at, updated_at FROM student_enquiry_form WHERE student_enquiry_id = ?
+                """;
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        StudentEnquiryFormDetails studentEnquiryFormDetails = null;
+
+        try{
+            studentEnquiryFormDetails = jdbcTemplate.queryForObject(sql, new Object[]{studentEnquiryId}, new RowMapper<StudentEnquiryFormDetails>() {
+                @Override
+                public StudentEnquiryFormDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+                    StudentEnquiryFormDetails sed = new StudentEnquiryFormDetails();
+                    // ===== BASIC =====
+                    sed.setStudentEnquiryId(rs.getInt("student_enquiry_id"));
+                    sed.setSrNo(rs.getString("sr_no"));
+                    sed.setAdmissionDate(rs.getString("admission_date"));
+                    sed.setAdmissionNo(rs.getString("admission_no"));
+                    sed.setClassSought(rs.getString("class_sought"));
+                    sed.setSession(rs.getString("session"));
+                    sed.setPen(rs.getString("pen"));
+                    sed.setApaarId(rs.getString("apaar_id"));
+
+                    // ===== PERSONAL =====
+                    sed.setStudentName(rs.getString("student_name"));
+                    sed.setGender(rs.getString("gender"));
+                    sed.setDob(rs.getString("dob"));
+                    sed.setDobInWords(rs.getString("dob_in_words"));
+
+                    // ===== MOTHER =====
+                    sed.setMotherName(rs.getString("mother_name"));
+                    sed.setMotherPhone(rs.getString("mother_phone"));
+                    sed.setMotherQualification(rs.getString("mother_qualification"));
+                    sed.setMotherEmail(rs.getString("mother_email"));
+                    sed.setMotherOccupation(rs.getString("mother_occupation"));
+                    sed.setMotherLocalAddress(rs.getString("mother_local_address"));
+                    sed.setMotherResidentialAddress(rs.getString("mother_residential_address"));
+                    sed.setMotherAnnualIncome(rs.getBigDecimal("mother_annual_income"));
+
+                    // ===== FATHER =====
+                    sed.setFatherName(rs.getString("father_name"));
+                    sed.setFatherPhone(rs.getString("father_phone"));
+                    sed.setFatherQualification(rs.getString("father_qualification"));
+                    sed.setFatherEmail(rs.getString("father_email"));
+                    sed.setFatherOccupation(rs.getString("father_occupation"));
+                    sed.setFatherLocalAddress(rs.getString("father_local_address"));
+                    sed.setFatherResidentialAddress(rs.getString("father_residential_address"));
+                    sed.setFatherAnnualIncome(rs.getBigDecimal("father_annual_income"));
+
+                    // ===== GUARDIAN =====
+                    sed.setGuardianName(rs.getString("guardian_name"));
+                    sed.setGuardianPhone(rs.getString("guardian_phone"));
+                    sed.setGuardianQualification(rs.getString("guardian_qualification"));
+                    sed.setGuardianEmail(rs.getString("guardian_email"));
+                    sed.setGuardianOccupation(rs.getString("guardian_occupation"));
+                    sed.setGuardianLocalAddress(rs.getString("guardian_local_address"));
+                    sed.setGuardianResidentialAddress(rs.getString("guardian_residential_address"));
+                    sed.setGuardianAnnualIncome(rs.getBigDecimal("guardian_annual_income"));
+
+                    // ===== STATUS =====
+                    sed.setIsSingleGirlChild(rs.getBoolean("is_single_girl_child"));
+                    sed.setIsSpeciallyAbled(rs.getBoolean("is_specially_abled"));
+
+                    // ===== CATEGORY =====
+                    sed.setCategory(rs.getString("category"));
+                    sed.setReligion(rs.getString("religion"));
+
+                    // ===== AADHAR =====
+                    sed.setAadharNumber(rs.getString("aadhar_number"));
+
+                    // ===== LAST SCHOOL =====
+                    sed.setLastSchoolName(rs.getString("last_school_name"));
+                    sed.setLastSchoolAddress(rs.getString("last_school_address"));
+                    sed.setLastClassAttended(rs.getString("last_class_attended"));
+                    sed.setLastSchoolBoard(rs.getString("last_school_board"));
+
+                    // ===== RESULT =====
+                    sed.setLastClassResult(rs.getString("last_class_result"));
+
+                    // ===== TC =====
+                    sed.setTransferCertificateNumber(rs.getString("transfer_certificate_number"));
+                    sed.setTcDateOfIssue(rs.getString("tc_date_of_issue"));
+
+                    sed.setStatus(rs.getString("status"));
+
+                    // ===== SIBLINGS =====
+                    String siblingsJson = rs.getString("siblings");
+                    if (siblingsJson != null && !siblingsJson.isEmpty()) {
+                        try {
+                            sed.setSiblings(Arrays.asList(objectMapper.readValue(siblingsJson, StudentEnquirySiblings[].class)));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error parsing siblings JSON", e);
+                        }
+                    }
+
+                    // ===== SUBJECTS =====
+                    String subjectsJson = rs.getString("subjects");
+                    if (subjectsJson != null && !subjectsJson.isEmpty()) {
+                        try {
+                            sed.setSubjects(Arrays.asList(objectMapper.readValue(subjectsJson, StudentEnquirySubjects[].class)));
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error parsing subjects JSON", e);
+                        }
+                    }
+
+                    // ===== DECLARATION =====
+                    sed.setDeclarationText(rs.getString("declaration_text"));
+                    sed.setDeclarationDate(rs.getString("declaration_date"));
+                    sed.setPlace(rs.getString("place"));
+                    sed.setParentSignature(rs.getString("parent_signature"));
+                    sed.setRelationshipWithCandidate(rs.getString("relationship_with_candidate"));
+                    sed.setPrincipalSignature(rs.getString("principal_signature"));
+
+                    // ===== OFFICE =====
+                    sed.setRegisterPageNo(rs.getString("register_page_no"));
+                    sed.setRegisterEntryDate(rs.getString("register_entry_date"));
+
+                    // ===== SYSTEM =====
+                    sed.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    sed.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
+
+                    return sed;
+
+                }
+            });
+        } catch (Exception e){
+            throw new Exception("Error fetching student enquiry data: " + e.getMessage(), e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+        return studentEnquiryFormDetails;
+    }
+
+    @Override
+    public StudentEnquiryFormDetails updateStudentEnquiryById(StudentEnquiryFormDetails studentEnquiryFormDetails, String schoolCode) throws Exception {
+        String sql = """
+                UPDATE student_enquiry_form SET admission_date = ?, admission_no = ?, class_sought = ?, session = ?, pen = ?, apaar_id = ?, student_name = ?, gender = ?,
+                dob = ?, dob_in_words = ?, mother_name = ?, mother_phone = ?, mother_qualification = ?, mother_email = ?, mother_occupation = ?, mother_local_address = ?,
+                mother_residential_address = ?, mother_annual_income = ?, father_name = ?, father_phone = ?, father_qualification = ?, father_email = ?, father_occupation = ?,
+                father_local_address = ?, father_residential_address = ?, father_annual_income = ?, guardian_name = ?, guardian_phone = ?, guardian_qualification = ?,
+                guardian_email = ?, guardian_occupation = ?, guardian_local_address = ?, guardian_residential_address = ?, guardian_annual_income = ?,
+                is_single_girl_child = ?, is_specially_abled = ?, category = ?, religion = ?, aadhar_number = ?, last_school_name = ?, last_school_address = ?,
+                last_class_attended = ?, last_school_board = ?, last_class_result = ?, transfer_certificate_number = ?, tc_date_of_issue = ?, status = ?, siblings = ?::jsonb, subjects = ?::jsonb,
+                declaration_text = ?, declaration_date = ?, place = ?, parent_signature = ?, relationship_with_candidate = ?, principal_signature = ?, register_page_no = ?,
+                register_entry_date = ?, updated_at = ? WHERE student_enquiry_id = ?
+                """;
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            String siblingsJson = objectMapper.writeValueAsString(studentEnquiryFormDetails.getSiblings() != null ? studentEnquiryFormDetails.getSiblings() : new ArrayList<>());
+
+            String subjectsJson = objectMapper.writeValueAsString(studentEnquiryFormDetails.getSubjects() != null ? studentEnquiryFormDetails.getSubjects() : new ArrayList<>());
+
+            int rows = jdbcTemplate.update(sql,
+                    studentEnquiryFormDetails.getAdmissionDate() != null ? java.sql.Date.valueOf(studentEnquiryFormDetails.getAdmissionDate()) : null,
+                    studentEnquiryFormDetails.getAdmissionNo(),
+                    studentEnquiryFormDetails.getClassSought(),
+                    studentEnquiryFormDetails.getSession(),
+                    studentEnquiryFormDetails.getPen(),
+                    studentEnquiryFormDetails.getApaarId(),
+                    studentEnquiryFormDetails.getStudentName(),
+                    studentEnquiryFormDetails.getGender(),
+                    studentEnquiryFormDetails.getDob() != null ? java.sql.Date.valueOf(studentEnquiryFormDetails.getDob()) : null,
+                    studentEnquiryFormDetails.getDobInWords(),
+
+                    studentEnquiryFormDetails.getMotherName(),
+                    studentEnquiryFormDetails.getMotherPhone(),
+                    studentEnquiryFormDetails.getMotherQualification(),
+                    studentEnquiryFormDetails.getMotherEmail(),
+                    studentEnquiryFormDetails.getMotherOccupation(),
+                    studentEnquiryFormDetails.getMotherLocalAddress(),
+                    studentEnquiryFormDetails.getMotherResidentialAddress(),
+                    studentEnquiryFormDetails.getMotherAnnualIncome(),
+
+                    studentEnquiryFormDetails.getFatherName(),
+                    studentEnquiryFormDetails.getFatherPhone(),
+                    studentEnquiryFormDetails.getFatherQualification(),
+                    studentEnquiryFormDetails.getFatherEmail(),
+                    studentEnquiryFormDetails.getFatherOccupation(),
+                    studentEnquiryFormDetails.getFatherLocalAddress(),
+                    studentEnquiryFormDetails.getFatherResidentialAddress(),
+                    studentEnquiryFormDetails.getFatherAnnualIncome(),
+
+                    studentEnquiryFormDetails.getGuardianName(),
+                    studentEnquiryFormDetails.getGuardianPhone(),
+                    studentEnquiryFormDetails.getGuardianQualification(),
+                    studentEnquiryFormDetails.getGuardianEmail(),
+                    studentEnquiryFormDetails.getGuardianOccupation(),
+                    studentEnquiryFormDetails.getGuardianLocalAddress(),
+                    studentEnquiryFormDetails.getGuardianResidentialAddress(),
+                    studentEnquiryFormDetails.getGuardianAnnualIncome(),
+
+                    Boolean.TRUE.equals(studentEnquiryFormDetails.getIsSingleGirlChild()),
+                    Boolean.TRUE.equals(studentEnquiryFormDetails.getIsSpeciallyAbled()),
+                    studentEnquiryFormDetails.getCategory(),
+                    studentEnquiryFormDetails.getReligion(),
+                    studentEnquiryFormDetails.getAadharNumber(),
+
+                    studentEnquiryFormDetails.getLastSchoolName(),
+                    studentEnquiryFormDetails.getLastSchoolAddress(),
+                    studentEnquiryFormDetails.getLastClassAttended(),
+                    studentEnquiryFormDetails.getLastSchoolBoard(),
+
+                    studentEnquiryFormDetails.getLastClassResult(),
+                    studentEnquiryFormDetails.getTransferCertificateNumber(),
+                    studentEnquiryFormDetails.getTcDateOfIssue() != null ? java.sql.Date.valueOf(studentEnquiryFormDetails.getTcDateOfIssue()) : null,
+                    studentEnquiryFormDetails.getStatus(),
+
+                    siblingsJson,
+                    subjectsJson,
+
+                    studentEnquiryFormDetails.getDeclarationText(),
+                    studentEnquiryFormDetails.getDeclarationDate() != null ? java.sql.Date.valueOf(studentEnquiryFormDetails.getDeclarationDate()) : null,
+                    studentEnquiryFormDetails.getPlace(),
+                    studentEnquiryFormDetails.getParentSignature(),
+                    studentEnquiryFormDetails.getRelationshipWithCandidate(),
+                    studentEnquiryFormDetails.getPrincipalSignature(),
+
+                    studentEnquiryFormDetails.getRegisterPageNo(),
+                    studentEnquiryFormDetails.getRegisterEntryDate() != null ? java.sql.Date.valueOf(studentEnquiryFormDetails.getRegisterEntryDate()) : null,
+                    LocalDateTime.now(), // updated_at
+
+                    studentEnquiryFormDetails.getStudentEnquiryId()
+            );
+
+            if (rows == 0) {
+                return null; // not found
+            }
+
+            return studentEnquiryFormDetails;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Error updating student enquiry", e);
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+
+    @Override
+    public boolean deleteStudentEnquiry(int studentEnquiryId, String schoolCode) throws Exception {
+        String sql = "DELETE FROM student_enquiry_form WHERE student_enquiry_id = ?";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            int rowAffected = jdbcTemplate.update(sql, new Object[]{studentEnquiryId});
+            return rowAffected > 0;
+        } catch (Exception e){
+            e.printStackTrace();
+            throw e;
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
     }
 
 

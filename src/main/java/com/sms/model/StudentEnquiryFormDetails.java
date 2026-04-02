@@ -84,6 +84,7 @@ public class StudentEnquiryFormDetails {
     // ===== TC =====
     private String transferCertificateNumber;
     private String tcDateOfIssue; // or LocalDate
+    private String status;
 
     // ===== JSON FIELDS =====
     private List<StudentEnquirySiblings> siblings;

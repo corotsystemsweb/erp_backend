@@ -95,7 +95,9 @@ public enum Message {
     DELETE_USER_SUCCESS("User is deleted successfully"),
     DELETE_USER_FAILED("User is not deleted"),
     DELETE_PARENT_DETAILS_SUCCESS("Parent details is deleted successfully"),
-    DELETE_PARENT_DETAILS_FAILED("Parent details is not deleted");
+    DELETE_PARENT_DETAILS_FAILED("Parent details is not deleted"),
+    DELETE_ENQUIRY_FORM_SUCCESS("Student enquiry form is deleted successfully"),
+    DELETE_ENQUIRY_FORM_FAILED("Student enquiry form is not deleted");
 
     private final String value;
     public String val(){return value;}
