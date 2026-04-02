@@ -1,4 +1,5 @@
 package com.sms.dao.impl;
+import java.sql.Timestamp;
 
 import com.sms.dao.AddBookDao;
 import com.sms.model.AddBookDetails;
@@ -27,7 +28,7 @@ public class AddBookDaoImpl implements AddBookDao {
     }
     @Override
     public AddBookDetails addNewBookDetails(AddBookDetails addBookDetails, String schoolCode) throws Exception {
-        String sql="insert into add_new_book(school_id, session_id, book_name, book_author_name, book_category_id, isbn, price, updated_by, update_date_time) values(?,?,?,?,?,?,?,?,?)";
+        String sql="insert into add_new_book(school_id, session_id, book_name, book_author_name, book_category_id, isbn, price, updated_by, update_date_time,description, publisher, year_published, edition, quantity, rack_location,status) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             KeyHolder keyHolder=new GeneratedKeyHolder();
@@ -41,7 +42,21 @@ public class AddBookDaoImpl implements AddBookDao {
                 ps.setString(6,addBookDetails.getIsbn());
                 ps.setString(7,addBookDetails.getPrice());
                 ps.setInt(8,addBookDetails.getUpdatedBy());
-                ps.setTimestamp(9,addBookDetails.getUpdateDateTime());
+
+                // ✅ New fields------------------------
+                ps.setString(11, addBookDetails.getPublisher());
+                ps.setString(12, addBookDetails.getYearPublished());
+                ps.setString(13, addBookDetails.getEdition());
+                ps.setInt(14, addBookDetails.getQuantity());
+                ps.setString(15, addBookDetails.getRackLocation());
+                ps.setString(16, "available"); // ✅ hardcoded default, never from frontend
+
+
+                // ADD
+                ps.setTimestamp(9, addBookDetails.getUpdateDateTime() != null
+                        ? addBookDetails.getUpdateDateTime()
+                        : new Timestamp(System.currentTimeMillis()));
+                ps.setString(10, addBookDetails.getDescription());
                 return ps;
             },keyHolder);
             Map<String,Object> keys=keyHolder.getKeys();
@@ -79,6 +94,7 @@ public class AddBookDaoImpl implements AddBookDao {
                     nb.setBookCategory(rs.getString("book_category_name"));
                     nb.setIsbn(rs.getString("isbn"));
                     nb.setPrice(rs.getString("price"));
+
                     return nb;
                 }
             });
@@ -93,7 +109,7 @@ public class AddBookDaoImpl implements AddBookDao {
 
     @Override
     public List<AddBookDetails> getAllBook(String schoolCode) throws Exception {
-        String sql = "SELECT b.book_id, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price " +
+        String sql = "SELECT b.book_id, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price, b.description, b.publisher, b.year_published, b.edition, b.quantity, b.rack_location, b.status " +
                 "FROM add_new_book b " +
                 "JOIN book_category bc ON b.book_category_id = bc.book_category_id " +
                 "WHERE deleted IS not true " +
@@ -112,6 +128,13 @@ public class AddBookDaoImpl implements AddBookDao {
                    nb.setBookCategory(rs.getString("book_category_name"));
                    nb.setIsbn(rs.getString("isbn"));
                    nb.setPrice(rs.getString("price"));
+                   nb.setDescription(rs.getString("description"));
+                   nb.setPublisher(rs.getString("publisher"));
+                   nb.setYearPublished(rs.getString("year_published"));
+                   nb.setEdition(rs.getString("edition"));
+                   nb.setQuantity(rs.getInt("quantity"));
+                   nb.setRackLocation(rs.getString("rack_location"));
+                   nb.setStatus(rs.getString("status"));
                    return nb;
                }
            });

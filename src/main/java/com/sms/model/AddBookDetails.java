@@ -11,9 +11,45 @@ public class AddBookDetails {
     private int bookCategoryId;
     private String isbn;
     private String price;
+
+    private String publisher;
+    private String yearPublished;
+    private String edition;
+    private int quantity;
+    private String rackLocation;
     private int updatedBy;
+    private String description;
     private Timestamp updateDateTime;
     private String bookCategory;
+
+    private String status;
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+
+    public String getPublisher() { return publisher; }
+    public void setPublisher(String publisher) { this.publisher = publisher; }
+
+    public String getYearPublished() { return yearPublished; }
+    public void setYearPublished(String yearPublished) { this.yearPublished = yearPublished; }
+
+    public String getEdition() { return edition; }
+    public void setEdition(String edition) { this.edition = edition; }
+
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public String getRackLocation() { return rackLocation; }
+    public void setRackLocation(String rackLocation) { this.rackLocation = rackLocation; }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public int getBookId() {
         return bookId;

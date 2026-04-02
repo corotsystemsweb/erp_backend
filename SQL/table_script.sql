@@ -840,7 +840,14 @@ CREATE TABLE add_new_book (
     price VARCHAR(255) NOT NULL,
     updated_by INT NOT NULL,
     update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT null,
-    deleted boolean default null
+    deleted boolean default null,
+    description  VARCHAR(500),
+    publisher    VARCHAR(255),
+    year_published VARCHAR(10),
+    edition      VARCHAR(100),
+    quantity     INT DEFAULT 0,
+    rack_location VARCHAR(100),
+    status       VARCHAR(50) DEFAULT 'available'
 );
 
 /* table for book_stock */
