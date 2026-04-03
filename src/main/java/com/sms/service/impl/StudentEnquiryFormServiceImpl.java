@@ -44,8 +44,8 @@ public class StudentEnquiryFormServiceImpl implements StudentEnquiryFormService 
     }
 
     @Override
-    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String schoolCode) throws Exception {
-        List<StudentEnquiryFormDetails> list = studentEnquiryFormDao.getAllStudentEnquiry(schoolCode);
+    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String status, String schoolCode) throws Exception {
+        List<StudentEnquiryFormDetails> list = studentEnquiryFormDao.getAllStudentEnquiry(status, schoolCode);
 
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();
@@ -68,6 +68,68 @@ public class StudentEnquiryFormServiceImpl implements StudentEnquiryFormService 
         }
 
         return finalList;
+    }
+
+    @Override
+    public StudentEnquiryFormDetails getStudentEnquiryById(int studentEnquiryId, String schoolCode) throws Exception {
+        StudentEnquiryFormDetails student =  studentEnquiryFormDao.getStudentEnquiryById(studentEnquiryId, schoolCode);
+
+        if(student == null){
+            return null;
+        }
+
+        //Load student image
+        try{
+            StudentEnquiryFormDetails img = studentEnquiryFormDao.getImage(schoolCode, studentEnquiryId);
+            if(img != null && img.getStudentImage() != null){
+                student.setStudentImage(img.getStudentImage());
+            }
+        } catch (Exception Ignored){
+            // Optional: log this instead of ignoring
+        }
+        return student;
+    }
+
+    @Override
+    public StudentEnquiryFormDetails updateStudentEnquiryById(StudentEnquiryFormDetails studentEnquiryFormDetails, MultipartFile file, String schoolCode) throws Exception {
+
+        // Update student data
+        StudentEnquiryFormDetails student = studentEnquiryFormDao.updateStudentEnquiryById(studentEnquiryFormDetails, schoolCode);
+
+        // If not found
+        if (student == null) {
+            return null;
+        }
+
+        int studentId = student.getStudentEnquiryId();
+
+        //Update image if file provided
+        if (file != null && !file.isEmpty()) {
+            try {
+                // Save/replace image
+                studentEnquiryFormDao.addImage(file, schoolCode, studentId);
+            } catch (Exception ignored) {
+                // no logging (as per your requirement)
+            }
+        }
+
+        //Fetch image (always, whether updated or existing)
+        try {
+            StudentEnquiryFormDetails img = studentEnquiryFormDao.getImage(schoolCode, studentId);
+
+            if (img != null && img.getStudentImage() != null) {
+                student.setStudentImage(img.getStudentImage());
+            }
+        } catch (Exception ignored) {
+            // image optional
+        }
+
+        return student;
+    }
+
+    @Override
+    public boolean deleteStudentEnquiry(int studentEnquiryId, String schoolCode) throws Exception {
+        return studentEnquiryFormDao.deleteStudentEnquiry(studentEnquiryId, schoolCode);
     }
 
 

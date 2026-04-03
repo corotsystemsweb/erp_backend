@@ -1485,6 +1485,7 @@ CREATE TABLE student_enquiry_form (
     -- ===== TRANSFER CERTIFICATE =====
     transfer_certificate_number VARCHAR(100),
     tc_date_of_issue DATE,
+    status VARCHAR(255),
 
     -- ===== SIBLINGS =====
     siblings JSONB DEFAULT '[]',
@@ -2995,6 +2996,7 @@ BEGIN
             -- ===== TRANSFER CERTIFICATE =====
             transfer_certificate_number VARCHAR(100),
             tc_date_of_issue DATE,
+            status VARCHAR(255),
 
             -- ===== SIBLINGS =====
             siblings JSONB DEFAULT ''[]'',
