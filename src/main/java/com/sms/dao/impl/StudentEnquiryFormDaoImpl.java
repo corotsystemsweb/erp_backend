@@ -225,8 +225,10 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
     }
 
     @Override
-    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String schoolCode) throws Exception {
-        String sql = """
+    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String status, String schoolCode) throws Exception {
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+
+        String baseQuery = """
                 SELECT student_enquiry_id, sr_no, admission_date, admission_no, class_sought, session, pen, apaar_id, student_name, gender,
                 dob, dob_in_words, mother_name, mother_phone, mother_qualification, mother_email, mother_occupation, mother_local_address,
                 mother_residential_address, mother_annual_income, father_name, father_phone, father_qualification, father_email, father_occupation,
@@ -235,16 +237,33 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                 is_single_girl_child, is_specially_abled, category, religion, aadhar_number, last_school_name, last_school_address,
                 last_class_attended, last_school_board, last_class_result, transfer_certificate_number, tc_date_of_issue, status, siblings, subjects,
                 declaration_text, declaration_date, place, parent_signature, relationship_with_candidate, principal_signature, register_page_no,
-                register_entry_date, created_at, updated_at FROM student_enquiry_form ORDER BY student_enquiry_id ASC
+                register_entry_date, created_at, updated_at FROM student_enquiry_form
                 """;
-        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
-        List<StudentEnquiryFormDetails> studentEnquiryFormDetails = null;
+        StringBuilder whereClause = new StringBuilder("WHERE 1=1 ");
+        List<Object> params = new ArrayList<>();
+
+        if(status != null && !status.trim().isEmpty()){
+            String normalizedStatus = status.trim().toUpperCase();
+
+            List<String> allowedStatus = Arrays.asList("PENDING", "VERIFIED", "SHORTLISTED", "REJECTED");
+
+            if(!allowedStatus.contains(normalizedStatus)){
+                throw new IllegalArgumentException("Invalid status value: " + status);
+            }
+
+            whereClause.append("AND status = ? ");
+            params.add(normalizedStatus);
+
+        }
+
+        String orderBy = " ORDER BY student_enquiry_id ASC";
+
+        String finalQuery = baseQuery + whereClause + orderBy;
 
         try{
-            studentEnquiryFormDetails = jdbcTemplate.query(sql, new RowMapper<StudentEnquiryFormDetails>() {
-                @Override
-                public StudentEnquiryFormDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    StudentEnquiryFormDetails sed = new StudentEnquiryFormDetails();
+            List<StudentEnquiryFormDetails> studentEnquiryFormDetails = jdbcTemplate.query(finalQuery, params.toArray(), (rs, rowNum) -> {
+
+                StudentEnquiryFormDetails sed = new StudentEnquiryFormDetails();
                     // ===== BASIC =====
                     sed.setStudentEnquiryId(rs.getInt("student_enquiry_id"));
                     sed.setSrNo(rs.getString("sr_no"));
@@ -354,15 +373,15 @@ public class StudentEnquiryFormDaoImpl implements StudentEnquiryFormDao {
                     sed.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
 
                     return sed;
-
-                }
             });
+
+            return studentEnquiryFormDetails;
+
         } catch (Exception e){
-            throw new Exception("Error fetching student enquiry data: " + e.getMessage(), e);
+            throw new RuntimeException("Error fetching student enquiry data", e);
         } finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
-        return studentEnquiryFormDetails;
     }
 
     @Override

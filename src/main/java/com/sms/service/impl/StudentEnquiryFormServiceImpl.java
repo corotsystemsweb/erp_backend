@@ -44,8 +44,8 @@ public class StudentEnquiryFormServiceImpl implements StudentEnquiryFormService 
     }
 
     @Override
-    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String schoolCode) throws Exception {
-        List<StudentEnquiryFormDetails> list = studentEnquiryFormDao.getAllStudentEnquiry(schoolCode);
+    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String status, String schoolCode) throws Exception {
+        List<StudentEnquiryFormDetails> list = studentEnquiryFormDao.getAllStudentEnquiry(status, schoolCode);
 
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();
