@@ -41,10 +41,10 @@ public class StudentEnquiryFormController {
         }
     }
 
-    @GetMapping("/get-all/{schoolCode}")
-    public ResponseEntity<?> getAllStudentEnquiry(@PathVariable String schoolCode){
+    @GetMapping("/get-all")
+    public ResponseEntity<?> getAllStudentEnquiry(@RequestParam(required = false) String status, @RequestParam String schoolCode){
         try{
-            List<StudentEnquiryFormDetails> list = studentEnquiryFormService.getAllStudentEnquiry(schoolCode);
+            List<StudentEnquiryFormDetails> list = studentEnquiryFormService.getAllStudentEnquiry(status, schoolCode);
 
             if(list == null || list.isEmpty()){
                 return ResponseEntity.ok("No records found.");

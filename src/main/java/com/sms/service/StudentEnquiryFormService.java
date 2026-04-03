@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface StudentEnquiryFormService {
     public StudentEnquiryFormDetails saveStudentEnquiry(StudentEnquiryFormDetails studentEnquiryFormDetails, MultipartFile file, String schoolCode) throws Exception;
-    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String schoolCode) throws Exception;
+    public List<StudentEnquiryFormDetails> getAllStudentEnquiry(String status, String schoolCode) throws Exception;
     public StudentEnquiryFormDetails getStudentEnquiryById(int studentEnquiryId, String schoolCode) throws Exception;
     public StudentEnquiryFormDetails updateStudentEnquiryById(StudentEnquiryFormDetails studentEnquiryFormDetails, MultipartFile file, String schoolCode) throws Exception;
     public boolean deleteStudentEnquiry(int studentEnquiryId,String schoolCode) throws Exception;
