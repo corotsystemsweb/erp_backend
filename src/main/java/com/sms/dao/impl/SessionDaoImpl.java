@@ -81,7 +81,7 @@ public class SessionDaoImpl implements SessionDao {
                 throw new Exception("Session is already exist");
             }
 
-            String sql = "INSERT INTO session (school_id, academic_session,start_date, end_date) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO session (school_id, academic_session,start_date, end_date, status) VALUES (?, ?, ?, ?, ?)";
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(connection -> {
@@ -90,6 +90,7 @@ public class SessionDaoImpl implements SessionDao {
                 ps.setString(2, sessionDetails.getAcademicSession());
                 ps.setObject(3, sessionDetails.getStartDate()); // LocalDate or null
                 ps.setObject(4, sessionDetails.getEndDate());
+                ps.setString(5, sessionDetails.getStatus());
                 return ps;
             }, keyHolder);
 
@@ -150,7 +151,7 @@ public class SessionDaoImpl implements SessionDao {
     }*/
 
     public SessionDetails getSessionById(int sessionId, String schoolCode) throws Exception {
-        String sql = "select distinct session_id, school_id, academic_session from session where session_id = ?";
+        String sql = "SELECT s.session_id, s.school_id, s.academic_session, s.start_date, s.end_date, s.status, COUNT(sad.student_id) AS total_students FROM session s LEFT JOIN student_academic_details sad ON s.session_id = sad.session_id AND s.school_id = sad.school_id where s.session_id = ? GROUP BY s.session_id, s.school_id, s.academic_session, s.status;";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         SessionDetails sessionDetails = null;
         try {
@@ -161,6 +162,10 @@ public class SessionDaoImpl implements SessionDao {
                     sd.setSessionId(rs.getInt("session_id"));
                     sd.setSchoolId(rs.getInt("school_id"));
                     sd.setAcademicSession(rs.getString("academic_session"));
+                    sd.setStartDate(rs.getDate("start_date") != null ? rs.getDate("start_date").toLocalDate() : null);
+                    sd.setEndDate(rs.getDate("end_date") != null ? rs.getDate("end_date").toLocalDate() : null);
+                    sd.setStatus(rs.getString("status"));
+                    sd.setTotalStudents(rs.getInt("total_students"));
                     return sd;
                 }
             });
@@ -198,7 +203,7 @@ public class SessionDaoImpl implements SessionDao {
 
     @Override
     public List<SessionDetails> getAllSessionDetails(String schoolCode) throws Exception {
-        String sql = "select distinct session_id, school_id, academic_session from session order by session_id asc";
+        String sql = "SELECT s.session_id, s.school_id, s.academic_session, s.start_date, s.end_date, s.status, COUNT(sad.student_id) AS total_students FROM session s LEFT JOIN student_academic_details sad ON s.session_id = sad.session_id AND s.school_id = sad.school_id GROUP BY s.session_id, s.school_id, s.academic_session, s.status ORDER BY s.session_id ASC";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<SessionDetails> sessionDetails=null;
        try{
@@ -209,6 +214,10 @@ public class SessionDaoImpl implements SessionDao {
                    sd.setSessionId(rs.getInt("session_id"));
                    sd.setSchoolId(rs.getInt("school_id"));
                    sd.setAcademicSession(rs.getString("academic_session"));
+                   sd.setStartDate(rs.getDate("start_date") != null ? rs.getDate("start_date").toLocalDate() : null);
+                   sd.setEndDate(rs.getDate("end_date") != null ? rs.getDate("end_date").toLocalDate() : null);
+                   sd.setStatus(rs.getString("status"));
+                   sd.setTotalStudents(rs.getInt("total_students"));
                    return sd;
                }
            });
@@ -244,13 +253,16 @@ public class SessionDaoImpl implements SessionDao {
 
     @Override
     public SessionDetails updateSessionDetailsById(SessionDetails sessionDetails, int sessionId, String schoolCode) throws Exception {
-        String sql = "UPDATE session SET school_id = ?, academic_session = ? WHERE session_id = ?";
+        String sql = "UPDATE session SET school_id = ?, academic_session = ?, start_date = ?, end_date = ?, status = ? WHERE session_id = ?";
         JdbcTemplate jdbcTemplate = null;
         try {
             jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
             int rowsAffected = jdbcTemplate.update(sql,
                     sessionDetails.getSchoolId(),
                     sessionDetails.getAcademicSession(),
+                    sessionDetails.getStartDate(),
+                    sessionDetails.getEndDate(),
+                    sessionDetails.getStatus(),
                     sessionId);
             if (rowsAffected > 0) {
                 return sessionDetails;

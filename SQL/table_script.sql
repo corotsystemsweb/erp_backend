@@ -242,7 +242,8 @@ CREATE TABLE session (
     school_id int not null,
     academic_session VARCHAR(255) NOT NULL,
     start_date DATE,
-    end_date DATE
+    end_date DATE,
+    status VARCHAR(255) DEFAULT NULL
 );
 
 /*script for school_details*/
@@ -1404,6 +1405,105 @@ CREATE TABLE timetable (
     updated_by INT
 );
 
+/* Script for student_enquiry_form */
+CREATE TABLE student_enquiry_form (
+
+    student_enquiry_id SERIAL PRIMARY KEY,
+
+    -- ===== BASIC DETAILS =====
+    sr_no VARCHAR(50),
+    admission_date DATE,
+    admission_no VARCHAR(100) UNIQUE,
+    class_sought VARCHAR(100),
+    session VARCHAR(100),
+    pen VARCHAR(100),
+    apaar_id VARCHAR(100),
+
+    -- ===== PERSONAL DETAILS =====
+    student_name VARCHAR(255),
+    gender VARCHAR(20),
+    dob DATE,
+    dob_in_words VARCHAR(255),
+
+    -- ===== PARENTS DETAILS =====
+    -- MOTHER
+    mother_name VARCHAR(255),
+    mother_phone VARCHAR(20),
+    mother_qualification VARCHAR(255),
+    mother_email VARCHAR(255),
+    mother_occupation VARCHAR(255),
+    mother_local_address TEXT,
+    mother_residential_address TEXT,
+    mother_annual_income DECIMAL(12,2),
+
+    -- FATHER
+    father_name VARCHAR(255),
+    father_phone VARCHAR(20),
+    father_qualification VARCHAR(255),
+    father_email VARCHAR(255),
+    father_occupation VARCHAR(255),
+    father_local_address TEXT,
+    father_residential_address TEXT,
+    father_annual_income DECIMAL(12,2),
+
+    -- GUARDIAN
+    guardian_name VARCHAR(255),
+    guardian_phone VARCHAR(20),
+    guardian_qualification VARCHAR(255),
+    guardian_email VARCHAR(255),
+    guardian_occupation VARCHAR(255),
+    guardian_local_address TEXT,
+    guardian_residential_address TEXT,
+    guardian_annual_income DECIMAL(12,2),
+
+    -- ===== CANDIDATE STATUS =====
+    is_single_girl_child BOOLEAN DEFAULT FALSE,
+    is_specially_abled BOOLEAN DEFAULT FALSE,
+
+    -- ===== CATEGORY =====
+    category VARCHAR(50),
+    religion VARCHAR(100),
+
+    -- ===== AADHAR =====
+    aadhar_number VARCHAR(20),
+
+    -- ===== LAST SCHOOL DETAILS =====
+    last_school_name VARCHAR(100),
+	last_school_address TEXT,
+    last_class_attended VARCHAR(100),
+    last_school_board VARCHAR(100),
+
+    -- ===== RESULT =====
+    last_class_result VARCHAR(255),
+
+    -- ===== TRANSFER CERTIFICATE =====
+    transfer_certificate_number VARCHAR(100),
+    tc_date_of_issue DATE,
+    status VARCHAR(255),
+
+    -- ===== SIBLINGS =====
+    siblings JSONB DEFAULT '[]',
+
+    -- ===== SUBJECTS =====
+    subjects JSONB DEFAULT '[]',
+
+    -- ===== DECLARATION =====
+    declaration_text TEXT,
+    declaration_date DATE,
+    place VARCHAR(255),
+    parent_signature VARCHAR(255),
+    relationship_with_candidate VARCHAR(100),
+    principal_signature VARCHAR(255),
+
+    -- ===== OFFICE USE =====
+    register_page_no VARCHAR(50),
+    register_entry_date DATE,
+
+    -- ===== SYSTEM FIELDS =====
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 /*DDL for TABLES AND SEQUENCE*/
 CREATE OR REPLACE FUNCTION medhapro.exec_ddl(schema_name TEXT)
 RETURNS TEXT AS $$
@@ -1602,7 +1702,8 @@ BEGIN
         school_id int not null,
         academic_session VARCHAR(255) NOT NULL,
         start_date DATE,
-        end_date DATE
+        end_date DATE,
+        status VARCHAR(255) DEFAULT NULL
     )';
     EXECUTE ddl_statement;
 
@@ -2816,6 +2917,103 @@ BEGIN
             is_break BOOLEAN DEFAULT FALSE,
             is_deleted BOOLEAN DEFAULT FALSE,
             updated_by INT
+       )';
+
+       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.student_enquiry_form (
+            student_enquiry_id SERIAL PRIMARY KEY,
+
+            -- ===== BASIC DETAILS =====
+            sr_no VARCHAR(50),
+            admission_date DATE,
+            admission_no VARCHAR(100) UNIQUE,
+            class_sought VARCHAR(100),
+            session VARCHAR(100),
+            pen VARCHAR(100),
+            apaar_id VARCHAR(100),
+
+            -- ===== PERSONAL DETAILS =====
+            student_name VARCHAR(255),
+            gender VARCHAR(20),
+            dob DATE,
+            dob_in_words VARCHAR(255),
+
+            -- ===== PARENTS DETAILS =====
+            -- MOTHER
+            mother_name VARCHAR(255),
+            mother_phone VARCHAR(20),
+            mother_qualification VARCHAR(255),
+            mother_email VARCHAR(255),
+            mother_occupation VARCHAR(255),
+            mother_local_address TEXT,
+            mother_residential_address TEXT,
+            mother_annual_income DECIMAL(12,2),
+
+            -- FATHER
+            father_name VARCHAR(255),
+            father_phone VARCHAR(20),
+            father_qualification VARCHAR(255),
+            father_email VARCHAR(255),
+            father_occupation VARCHAR(255),
+            father_local_address TEXT,
+            father_residential_address TEXT,
+            father_annual_income DECIMAL(12,2),
+
+            -- GUARDIAN
+            guardian_name VARCHAR(255),
+            guardian_phone VARCHAR(20),
+            guardian_qualification VARCHAR(255),
+            guardian_email VARCHAR(255),
+            guardian_occupation VARCHAR(255),
+            guardian_local_address TEXT,
+            guardian_residential_address TEXT,
+            guardian_annual_income DECIMAL(12,2),
+
+            -- ===== CANDIDATE STATUS =====
+            is_single_girl_child BOOLEAN DEFAULT FALSE,
+            is_specially_abled BOOLEAN DEFAULT FALSE,
+
+            -- ===== CATEGORY =====
+            category VARCHAR(50),
+            religion VARCHAR(100),
+
+            -- ===== AADHAR =====
+            aadhar_number VARCHAR(20),
+
+            -- ===== LAST SCHOOL DETAILS =====
+            last_school_name VARCHAR(100),
+            last_school_address TEXT,
+            last_class_attended VARCHAR(100),
+            last_school_board VARCHAR(100),
+
+            -- ===== RESULT =====
+            last_class_result VARCHAR(255),
+
+            -- ===== TRANSFER CERTIFICATE =====
+            transfer_certificate_number VARCHAR(100),
+            tc_date_of_issue DATE,
+            status VARCHAR(255),
+
+            -- ===== SIBLINGS =====
+            siblings JSONB DEFAULT ''[]'',
+
+            -- ===== SUBJECTS =====
+            subjects JSONB DEFAULT ''[]'',
+
+            -- ===== DECLARATION =====
+            declaration_text TEXT,
+            declaration_date DATE,
+            place VARCHAR(255),
+            parent_signature VARCHAR(255),
+            relationship_with_candidate VARCHAR(100),
+            principal_signature VARCHAR(255),
+
+            -- ===== OFFICE USE =====
+            register_page_no VARCHAR(50),
+            register_entry_date DATE,
+
+            -- ===== SYSTEM FIELDS =====
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
        )';
 
     -- Return the schema name after execution
