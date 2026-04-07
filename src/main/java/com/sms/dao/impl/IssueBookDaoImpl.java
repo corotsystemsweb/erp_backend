@@ -1,7 +1,6 @@
 package com.sms.dao.impl;
 
 import com.sms.dao.IssueBookDao;
-import com.sms.model.AddBookDetails;
 import com.sms.model.IssueBookDetails;
 import com.sms.util.DatabaseUtil;
 import org.springframework.beans.factory.annotation.Autowired;

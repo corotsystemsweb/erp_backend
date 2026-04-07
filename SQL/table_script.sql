@@ -877,6 +877,26 @@ CREATE table issue_book (
     update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT null,
     deleted boolean default null
 );
+
+/* table for return_book */
+CREATE TABLE return_book (
+    return_book_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
+    class_id INT NOT NULL,
+    section_id INT NOT NULL,
+    student_id INT NOT NULL,
+    book_id INT NOT NULL,
+    issue_book_id INT NOT NULL,
+    return_date DATE DEFAULT CURRENT_DATE,
+    book_condition VARCHAR(50) DEFAULT 'good',
+    fine_amount NUMERIC(10,2),
+    remarks TEXT,
+    updated_by INT,
+    update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
 /*table for add_supplier*/
 CREATE TABLE add_supplier (
     supplier_id SERIAL PRIMARY KEY,
@@ -3019,6 +3039,23 @@ BEGIN
             -- ===== SYSTEM FIELDS =====
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+       )';
+EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.return_book (
+            return_book_id SERIAL PRIMARY KEY,
+            school_id INT NOT NULL,
+            session_id INT NOT NULL,
+            class_id INT NOT NULL,
+            section_id INT NOT NULL,
+            student_id INT NOT NULL,
+            book_id INT NOT NULL,
+            issue_book_id INT NOT NULL,
+            return_date DATE DEFAULT CURRENT_DATE,
+            book_condition VARCHAR(50) DEFAULT ''good'',
+            fine_amount NUMERIC(10,2),
+            remarks TEXT,
+            updated_by INT,
+            update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            deleted BOOLEAN DEFAULT FALSE
        )';
 
     -- Return the schema name after execution
