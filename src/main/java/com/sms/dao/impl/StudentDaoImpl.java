@@ -616,8 +616,8 @@ public class StudentDaoImpl implements StudentDao {
     }
 
     @Override
-    public List<StudentDetails> getAllStudentDetails(int sessionId,String schoolCode) throws Exception {
-        String sql = """
+    public List<StudentDetails> getAllStudentDetails(int sessionId, String status, String schoolCode) throws Exception {
+        StringBuilder sqlBuilder =  new StringBuilder("""
                 SELECT
                     spd.id AS student_personal_id,
                     spd.student_id,
@@ -758,43 +758,60 @@ public class StudentDaoImpl implements StudentDao {
                     spd.validity_end_date >= NOW()
                     AND sad.validity_end_date >= NOW()
                     AND sad.session_id=?
-                    AND spd.deleted IS NOT TRUE
-                GROUP BY
-                    spd.id, spd.student_id, spd.school_id, spd.uu_id,
-                    spd.first_name, spd.last_name, spd.blood_group, spd.gender,
-                    spd.height, spd.weight, spd.aadhar_number, spd.phone_number, spd.emergency_phone_number, spd.whatsapp_no,
-                    spd.email_address, spd.dob, spd.dob_cirtificate_no, spd.income_app_no, spd.caste_app_no, spd.domicile_app_no,
-                    spd.govt_student_id_on_portal, spd.govt_family_id_on_portal, spd.bank_name, spd.branch_name, spd.ifsc_code,
-                    spd.account_no, spd.pan_no, spd.religion, spd.nationality, spd.category, spd.caste, spd.current_address,
-                    spd.current_city, spd.current_state, spd.current_zipcode, spd.permanent_address, spd.permanent_city,
-                    spd.permanent_state, spd.permanent_zipcode, spd.student_country, spd.current_status, spd.current_status_comment,
-                    spd.updated_by, spd.updated_date, spd.create_date, spd.validity_start_date, spd.validity_end_date,
-                    spd.student_photo, sad.apaar_id, sad.pen_no, sad.admission_no,
-                    sad.admission_date, sad.registration_number, sad.roll_number, sad.session_id, sad.student_class_id,
-                    sad.student_section_id, sad.stream, sad.education_medium, sad.referred_by, sad.is_rte_student, sad.rte_application_no,
-                    sad.enrolled_session, sad.enrolled_class, sad.enrolled_year, sad.transfer_cirti_no, sad.date_of_issue,
-                    sad.scholarship_id, sad.scholarship_password, sad.lst_school_name, sad.lst_school_addrs, sad.lst_attended_class,
-                    sad.lst_scl_aff_to, sad.lst_session, sad.is_dropout, sad.dropout_date, sad.dropout_reason, sad.student_addmission_type,
-                    sad.session_status, sad.session_status_comment, sad.previous_qualifications, sad.student_type, mc.class_id, mc.class_name,
-                    ms.section_id, ms.section_name, ses.academic_session, sd.school_name, sd.school_address, sd.school_city, sd.school_state,
-                    sd.school_country, sd.school_zipcode, sd.email_address, sd.phone_number
-                ORDER BY\s
-                    CASE\s
-                        WHEN LOWER(class_name) ~ 'playway|play way|play group|pw' THEN 0
-                        WHEN LOWER(class_name) ~ 'nursery|nur|nr' THEN 1
-                        WHEN LOWER(class_name) ~ 'l\\.?k\\.?g|lower kg' THEN 2
-                        WHEN LOWER(class_name) ~ 'u\\.?k\\.?g|upper kg' THEN 3
-                        WHEN LOWER(class_name) ~ 'kg|kindergarten' THEN 4
-                        WHEN class_name ~ '^[0-9]' THEN
-                            CAST(SUBSTRING(class_name FROM '^[0-9]+') AS INTEGER) + 10
-                        ELSE 99  
-                    END ASC,
-                    class_name ASC 
-                """;
+                """);
+        // Add status filter based on parameter
+        List<Object> params = new ArrayList<>();
+        params.add(sessionId);
+
+        if (status != null && !status.trim().isEmpty()) {
+            if (status.equalsIgnoreCase("deleted")) {
+                sqlBuilder.append(" AND spd.deleted = TRUE");
+            } else if (status.equalsIgnoreCase("active") || status.equalsIgnoreCase("non-deleted")) {
+                sqlBuilder.append(" AND (spd.deleted IS NOT TRUE OR spd.deleted IS NULL)");
+            } else {
+                // Invalid status value
+                throw new IllegalArgumentException("Invalid status parameter. Allowed values: 'deleted', 'active', 'non-deleted'");
+            }
+        }
+
+        sqlBuilder.append("""
+            GROUP BY
+                spd.id, spd.student_id, spd.school_id, spd.uu_id,
+                spd.first_name, spd.last_name, spd.blood_group, spd.gender,
+                spd.height, spd.weight, spd.aadhar_number, spd.phone_number, spd.emergency_phone_number, spd.whatsapp_no,
+                spd.email_address, spd.dob, spd.dob_cirtificate_no, spd.income_app_no, spd.caste_app_no, spd.domicile_app_no,
+                spd.govt_student_id_on_portal, spd.govt_family_id_on_portal, spd.bank_name, spd.branch_name, spd.ifsc_code,
+                spd.account_no, spd.pan_no, spd.religion, spd.nationality, spd.category, spd.caste, spd.current_address,
+                spd.current_city, spd.current_state, spd.current_zipcode, spd.permanent_address, spd.permanent_city,
+                spd.permanent_state, spd.permanent_zipcode, spd.student_country, spd.current_status, spd.current_status_comment,
+                spd.updated_by, spd.updated_date, spd.create_date, spd.validity_start_date, spd.validity_end_date,
+                spd.student_photo, sad.apaar_id, sad.pen_no, sad.admission_no,
+                sad.admission_date, sad.registration_number, sad.roll_number, sad.session_id, sad.student_class_id,
+                sad.student_section_id, sad.stream, sad.education_medium, sad.referred_by, sad.is_rte_student, sad.rte_application_no,
+                sad.enrolled_session, sad.enrolled_class, sad.enrolled_year, sad.transfer_cirti_no, sad.date_of_issue,
+                sad.scholarship_id, sad.scholarship_password, sad.lst_school_name, sad.lst_school_addrs, sad.lst_attended_class,
+                sad.lst_scl_aff_to, sad.lst_session, sad.is_dropout, sad.dropout_date, sad.dropout_reason, sad.student_addmission_type,
+                sad.session_status, sad.session_status_comment, sad.previous_qualifications, sad.student_type, mc.class_id, mc.class_name,
+                ms.section_id, ms.section_name, ses.academic_session, sd.school_name, sd.school_address, sd.school_city, sd.school_state,
+                sd.school_country, sd.school_zipcode, sd.email_address, sd.phone_number
+            ORDER BY\s
+                CASE\s
+                    WHEN LOWER(class_name) ~ 'playway|play way|play group|pw' THEN 0
+                    WHEN LOWER(class_name) ~ 'nursery|nur|nr' THEN 1
+                    WHEN LOWER(class_name) ~ 'l\\.?k\\.?g|lower kg' THEN 2
+                    WHEN LOWER(class_name) ~ 'u\\.?k\\.?g|upper kg' THEN 3
+                    WHEN LOWER(class_name) ~ 'kg|kindergarten' THEN 4
+                    WHEN class_name ~ '^[0-9]' THEN
+                        CAST(SUBSTRING(class_name FROM '^[0-9]+') AS INTEGER) + 10
+                    ELSE 99  
+                END ASC,
+                class_name ASC 
+        """);
+
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         List<StudentDetails> studentDetails = null;
         try{
-            studentDetails =  jdbcTemplate.query(sql,new Object[]{sessionId} ,new RowMapper<StudentDetails>() {
+            studentDetails =  jdbcTemplate.query(sqlBuilder.toString(), params.toArray(),new RowMapper<StudentDetails>() {
                 @Override
                 public StudentDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
                     StudentDetails sd = new StudentDetails();
@@ -1127,6 +1144,20 @@ public class StudentDaoImpl implements StudentDao {
     @Override
     public boolean softDeleteStudent(int studentId, String schoolCode) throws Exception {
         String sql = "UPDATE student_personal_details SET deleted = TRUE WHERE student_id = ?";
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try{
+            int update = jdbcTemplate.update(sql, studentId);
+            return update > 0;
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+    @Override
+    public boolean restoreDeletedStudent(int studentId, String schoolCode) throws Exception {
+        String sql = "UPDATE student_personal_details SET deleted = NULL WHERE student_id = ?";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             int update = jdbcTemplate.update(sql, studentId);

@@ -14,10 +14,11 @@ public interface StudentDao {
     public StudentDetails addStudentPersonalDetails(StudentDetails studentDetails, String schoolCode) throws Exception;
     public StudentDetails addStudentAcademicDetails(StudentDetails studentDetails, String schoolCode) throws Exception;
     public StudentDetails getStudentDetailsById(int studentId, String schoolCode) throws Exception;
-    public List<StudentDetails> getAllStudentDetails(int sessionId,String schoolCode) throws Exception;
+    public List<StudentDetails> getAllStudentDetails(int sessionId, String status, String schoolCode) throws Exception;
     public StudentDetails updateStudentPersonalDetails(StudentDetails studentDetails, int studentId, String schoolCode) throws Exception;
     public StudentDetails updateStudentAcademicDetails(StudentDetails studentDetails, int studentId, String schoolCode) throws Exception;
     public boolean softDeleteStudent(int studentId, String schoolCode) throws Exception;
+    public boolean restoreDeletedStudent(int studentId, String schoolCode) throws Exception;
     public List<StudentDetails> searchStudentByClassNameAndSection(String studentClass, String studentSection, String schoolCode) throws Exception;
     public List<StudentDetails> searchByClassSectionAndSession(int studentClass, int studentSection, int sessionId, String schoolCode) throws Exception;
     public int getTotalStudent(String schoolCode) throws Exception;

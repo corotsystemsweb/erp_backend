@@ -142,11 +142,11 @@ public class StudentController {
         }
     }
     @GetMapping("/all/details/{sessionId}/{schoolCode}")
-    public ResponseEntity<Object> getAllStudentDetails(@PathVariable int sessionId,@PathVariable String schoolCode) throws Exception {
+    public ResponseEntity<Object> getAllStudentDetails(@PathVariable int sessionId, @RequestParam(required = false) String status, @PathVariable String schoolCode) throws Exception {
         List<StudentFullResponseDetails> result = null;
 
         try {
-            result = studentService.getAllStudentDetails(sessionId,schoolCode);   // List of object
+            result = studentService.getAllStudentDetails(sessionId, status, schoolCode);   // List of object
             return new ResponseEntity<>(result, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -214,6 +214,20 @@ public class StudentController {
            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
        }
    }
+
+    @PatchMapping("/restore-deleted-student")
+    public ResponseEntity<Object> restoreDeletedStudent(@RequestParam("studentId") int studentId, @RequestParam("schoolCode") String schoolCode) throws Exception {
+        boolean result = studentService.restoreDeletedStudent(studentId, schoolCode);
+        if (result) {
+            // If deletion is successful
+            StudentResponse response = new StudentResponse(result, 200, RESTORE_STUDENT_SUCCESS.val());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } else {
+            // If deletion fails
+            StudentResponse response = new StudentResponse(result, 400, RESTORE_STUDENT_FAILED.val());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
    //searching the student details based on studentClass and studentSection
     @GetMapping("/attendance/search")
     public ResponseEntity<Object> searchStudentByClassNameAndSection(
