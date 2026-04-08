@@ -63,6 +63,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
     public List<IssueBookDetails> getIssueBookDetails(String schoolCode) throws Exception {
         String sql = "SELECT " +
                 "    ib.issue_book_id, " +
+                "    ib.school_id, " +
+                "    ib.session_id, " +
+                "    ib.class_id, " +
+                "    ib.section_id, " +
+                "    ib.student_id, " +
+                "    ib.book_id, " +
+                "    ib.updated_by, " +
+                "    ib.update_date_time, " +
                 "    spd.first_name || ' ' || spd.last_name AS student_name, " +
                 "    anb.book_name, " +
                 "    anb.isbn, " +
@@ -87,6 +95,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
                 public IssueBookDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
                     IssueBookDetails ib = new IssueBookDetails();
                     ib.setIssueBookId(rs.getInt("issue_book_id"));
+                    ib.setSchoolId(rs.getInt("school_id"));
+                    ib.setSessionId(rs.getInt("session_id"));
+                    ib.setClassId(rs.getInt("class_id"));
+                    ib.setSectionId(rs.getInt("section_id"));
+                    ib.setStudentId(rs.getInt("student_id"));
+                    ib.setBookId(rs.getInt("book_id"));
+                    ib.setUpdatedBy(rs.getInt("updated_by"));
+                    ib.setUpdateDateTime(rs.getTimestamp("update_date_time"));
                     ib.setStudentName(rs.getString("student_name"));
                     ib.setBookName(rs.getString("book_name"));
                     ib.setIsbn(rs.getString("isbn"));
@@ -110,6 +126,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
     public IssueBookDetails getIssueBookDetailsById(int issueBookId, String schoolCode) throws Exception {
         String sql = "SELECT " +
                 "    ib.issue_book_id, " +
+                "    ib.school_id, " +
+                "    ib.session_id, " +
+                "    ib.class_id, " +
+                "    ib.section_id, " +
+                "    ib.student_id, " +
+                "    ib.book_id, " +
+                "    ib.updated_by, " +
+                "    ib.update_date_time, " +
                 "    spd.first_name || ' ' || spd.last_name AS student_name, " +
                 "    anb.book_name, " +
                 "    anb.isbn, " +
@@ -133,6 +157,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
                 public IssueBookDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
                     IssueBookDetails ib = new IssueBookDetails();
                     ib.setIssueBookId(rs.getInt("issue_book_id"));
+                    ib.setSchoolId(rs.getInt("school_id"));           // ADD THIS
+                    ib.setSessionId(rs.getInt("session_id"));         // ADD THIS
+                    ib.setClassId(rs.getInt("class_id"));             // ADD THIS
+                    ib.setSectionId(rs.getInt("section_id"));         // ADD THIS
+                    ib.setStudentId(rs.getInt("student_id"));         // ADD THIS
+                    ib.setBookId(rs.getInt("book_id"));               // ADD THIS
+                    ib.setUpdatedBy(rs.getInt("updated_by"));         // ADD THIS
+                    ib.setUpdateDateTime(rs.getTimestamp("update_date_time")); // ADD THIS
                     ib.setStudentName(rs.getString("student_name"));
                     ib.setBookName(rs.getString("book_name"));
                     ib.setIsbn(rs.getString("isbn"));
@@ -195,6 +227,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
     public List<IssueBookDetails> getIssueBookDetailsbBySearchText(String searchText, String schoolCode) throws Exception {
         String sql = " SELECT \n" +
                 "    ib.issue_book_id, \n" +
+                "    ib.school_id, \n" +           // ADD
+                "    ib.session_id, \n" +          // ADD
+                "    ib.class_id, \n" +            // ADD
+                "    ib.section_id, \n" +          // ADD
+                "    ib.student_id, \n" +          // ADD
+                "    ib.book_id, \n" +             // ADD
+                "    ib.updated_by, \n" +          // ADD
+                "    ib.update_date_time, \n" +    // ADD
                 "    spd.first_name || ' ' || spd.last_name AS student_name, \n" +
                 "    anb.book_name, \n" +
                 "    anb.isbn, \n" +
@@ -233,6 +273,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
                 public IssueBookDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
                     IssueBookDetails ib = new IssueBookDetails();
                     ib.setIssueBookId(rs.getInt("issue_book_id"));
+                    ib.setSchoolId(rs.getInt("school_id"));
+                    ib.setSessionId(rs.getInt("session_id"));
+                    ib.setClassId(rs.getInt("class_id"));
+                    ib.setSectionId(rs.getInt("section_id"));
+                    ib.setStudentId(rs.getInt("student_id"));
+                    ib.setBookId(rs.getInt("book_id"));
+                    ib.setUpdatedBy(rs.getInt("updated_by"));
+                    ib.setUpdateDateTime(rs.getTimestamp("update_date_time"));
                     ib.setStudentName(rs.getString("student_name"));
                     ib.setBookName(rs.getString("book_name"));
                     ib.setIsbn(rs.getString("isbn"));
