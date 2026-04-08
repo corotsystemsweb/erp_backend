@@ -362,8 +362,8 @@ public StudentFullResponseDetails getStudentDetailsById(int studentId, String sc
 //    }
 
     @Override
-    public List<StudentFullResponseDetails> getAllStudentDetails(int sessionId, String schoolCode) throws Exception {
-        List<StudentDetails> list = studentDao.getAllStudentDetails(sessionId, schoolCode);
+    public List<StudentFullResponseDetails> getAllStudentDetails(int sessionId, String status, String schoolCode) throws Exception {
+        List<StudentDetails> list = studentDao.getAllStudentDetails(sessionId, status, schoolCode);
 
         if (list == null || list.isEmpty()) {
             return new ArrayList<>();
@@ -708,6 +708,12 @@ public StudentFullResponseDetails getStudentDetailsById(int studentId, String sc
     public boolean softDeleteStudent(int studentId, String schoolCode) throws Exception {
         return studentDao.softDeleteStudent(studentId, schoolCode);
     }
+
+    @Override
+    public boolean restoreDeletedStudent(int studentId, String schoolCode) throws Exception {
+        return studentDao.restoreDeletedStudent(studentId, schoolCode);
+    }
+
 
     @Override
     public List<StudentDetails> searchStudentByClassNameAndSection(String studentClass, String studentSection, String schoolCode) throws Exception {
