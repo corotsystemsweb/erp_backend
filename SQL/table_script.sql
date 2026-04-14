@@ -2678,14 +2678,30 @@ BEGIN
    EXECUTE ddl_statement;
 
     -- 1. exam_type
-       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type(
-           exam_type_id SERIAL PRIMARY KEY,
-           name VARCHAR(50) UNIQUE NOT NULL,
-           session_id INT NOT NULL,
-           description TEXT,
-           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-       )';
+--       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type(
+--           exam_type_id SERIAL PRIMARY KEY,
+--           name VARCHAR(50) UNIQUE NOT NULL,
+--           session_id INT NOT NULL,
+--           description TEXT,
+--           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+--       )';
+        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type (
+            exam_type_id          SERIAL PRIMARY KEY,
+            school_id             INT NOT NULL,
+            session_id            INT NOT NULL,
+            name                  VARCHAR(100) NOT NULL,
+            description           TEXT DEFAULT NULL,
+            category              VARCHAR(50) NOT NULL DEFAULT ''major'',
+            weightage_percent     DECIMAL(5,2) DEFAULT NULL,
+            passing_marks_percent DECIMAL(5,2) DEFAULT NULL,
+            grading_system        VARCHAR(50) DEFAULT ''CBSE Standard Grade'',
+            exam_options          JSONB DEFAULT NULL,
+            status                VARCHAR(20) DEFAULT ''ACTIVE'',
+            created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT unique_exam_type UNIQUE (school_id, session_id, name)
+        )';
 
        -- 2. mst_grade (ग्रेड डेटा के साथ)
        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.mst_grade (
