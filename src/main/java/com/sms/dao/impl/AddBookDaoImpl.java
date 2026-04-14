@@ -109,7 +109,7 @@ public class AddBookDaoImpl implements AddBookDao {
 
     @Override
     public List<AddBookDetails> getAllBook(String schoolCode) throws Exception {
-        String sql = "SELECT b.book_id, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price, b.description, b.publisher, b.year_published, b.edition, b.quantity, b.rack_location, b.status " +
+        String sql = "SELECT b.book_id, b.school_id, b.session_Id, b.updated_by, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price, b.description, b.publisher, b.year_published, b.edition, b.quantity, b.rack_location, b.status " +
                 "FROM add_new_book b " +
                 "JOIN book_category bc ON b.book_category_id = bc.book_category_id " +
                 "WHERE deleted IS not true " +
@@ -122,6 +122,9 @@ public class AddBookDaoImpl implements AddBookDao {
                public AddBookDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
                    AddBookDetails nb = new AddBookDetails();
                    nb.setBookId(rs.getInt("book_id"));
+                   nb.setSchoolId(rs.getInt("school_id"));
+                   nb.setSessionId(rs.getInt("session_id"));
+                   nb.setUpdatedBy(rs.getInt("updated_by"));
                    nb.setBookName(rs.getString("book_name"));
                    nb.setBookAuthorName(rs.getString("book_author_name"));
                    nb.setBookCategoryId(rs.getInt("book_category_id"));
@@ -149,7 +152,8 @@ public class AddBookDaoImpl implements AddBookDao {
 
     @Override
     public AddBookDetails updateById(AddBookDetails addBookDetails, int bookId, String schoolCode) throws Exception {
-        String sql = "UPDATE add_new_book SET school_id = ?, session_id = ?, book_name = ?, book_author_name = ?, book_category_id = ?, isbn = ?, price = ?, updated_by = ?, update_date_time = ? WHERE book_id = ?";
+        String sql = "UPDATE add_new_book SET school_id = ?, session_id = ?, book_name = ?, book_author_name = ?, book_category_id = ?, isbn = ?, price = ?, updated_by = ?, update_date_time = ?, description = ?, publisher = ?, year_published = ?, edition = ?, quantity = ?, rack_location = ?, status = ? WHERE book_id = ?";
+        String status = addBookDetails.getQuantity() > 0 ? "available" : "unavailable";
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try{
             int rowEffected = jdbcTemplate.update(sql,
@@ -162,8 +166,17 @@ public class AddBookDaoImpl implements AddBookDao {
                     addBookDetails.getPrice(),
                     addBookDetails.getUpdatedBy(),
                     addBookDetails.getUpdateDateTime(),
-                    bookId);
+                    addBookDetails.getDescription(),
+                    addBookDetails.getPublisher(),
+                    addBookDetails.getYearPublished(),
+                    addBookDetails.getEdition(),
+                    addBookDetails.getQuantity(),
+                    addBookDetails.getRackLocation(),
+                    status,
+                    bookId
+            );
             if (rowEffected > 0) {
+                addBookDetails.setBookId(bookId);
                 return addBookDetails;
             } else {
                 return null;

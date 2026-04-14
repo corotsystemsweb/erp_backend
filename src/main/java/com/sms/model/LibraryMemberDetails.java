@@ -32,6 +32,8 @@ public class LibraryMemberDetails {
 
     private int updatedBy;
     private Timestamp updateDateTime;
+    private  String className;
+    private String sectionName;
 
     private boolean deleted;
 }

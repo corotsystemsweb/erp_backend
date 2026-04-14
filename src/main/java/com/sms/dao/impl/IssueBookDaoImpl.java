@@ -45,6 +45,14 @@ public class IssueBookDaoImpl implements IssueBookDao {
                 ps.setTimestamp(11,issueBookDetails.getUpdateDateTime());
                 return ps;
             },keyHolder);
+
+            String updateSql = "UPDATE add_new_book SET quantity = quantity - 1, " +
+                    "status = CASE WHEN quantity - 1 = 0 THEN 'unavailable' ELSE 'available' END " +
+                    "WHERE book_id = ?";
+
+            jdbcTemplate.update(updateSql, issueBookDetails.getBookId());
+
+
             Map<String,Object> keys=keyHolder.getKeys();
             if(keys != null && keys.containsKey("issue_book_id")){
                 int generatedId=((Number) keys.get("issue_book_id")).intValue();

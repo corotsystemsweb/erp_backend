@@ -897,6 +897,41 @@ CREATE TABLE return_book (
     deleted BOOLEAN DEFAULT FALSE
 );
 
+/* table for library_member */
+CREATE TABLE library_member (
+    member_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
+    member_type VARCHAR(50) NOT NULL,
+    student_id INT,
+    staff_id INT,
+    class_id INT,
+    section_id INT,
+    member_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    valid_until DATE,
+    updated_by INT,
+    update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
+/* table for book_report */
+CREATE TABLE book_report (
+    report_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
+    member_id INT NOT NULL,
+    book_id INT NOT NULL,
+    report_type VARCHAR(50) NOT NULL,
+    fine_amount NUMERIC(10,2),
+    report_date DATE DEFAULT CURRENT_DATE,
+    reason TEXT,
+    updated_by INT,
+    update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
 /*table for add_supplier*/
 CREATE TABLE add_supplier (
     supplier_id SERIAL PRIMARY KEY,
@@ -2435,6 +2470,46 @@ BEGIN
         deleted boolean default null
      )';
      EXECUTE ddl_statement;
+-- Create the library_member table
+ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.library_member (
+    member_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
+    member_type VARCHAR(50) NOT NULL,
+    student_id INT,
+    staff_id INT,
+    class_id INT,
+    section_id INT,
+    member_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    valid_until DATE,
+    updated_by INT,
+    update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+)';
+EXECUTE ddl_statement;
+
+
+-- Create the book_report table
+ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.book_report (
+    report_id SERIAL PRIMARY KEY,
+    school_id INT NOT NULL,
+    session_id INT NOT NULL,
+    member_id INT NOT NULL,
+    book_id INT NOT NULL,
+    report_type VARCHAR(50) NOT NULL,
+    fine_amount NUMERIC(10,2),
+    report_date DATE DEFAULT CURRENT_DATE,
+    reason TEXT,
+    updated_by INT,
+    update_date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+)';
+EXECUTE ddl_statement;
+
+
+
     -- Create the book_stock table
      ddl_statement := 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.book_stock (
         book_stock_id SERIAL PRIMARY KEY,
