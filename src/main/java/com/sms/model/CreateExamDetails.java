@@ -19,6 +19,8 @@ public class CreateExamDetails {
     private String academicSession;
     private String className;
     private String sectionName;
+    private String roomNumber;
+    private String examRules;
     private List<ExamSubjectsDetails> subjects;
 
     public Integer getClassId() {
@@ -132,4 +134,12 @@ public class CreateExamDetails {
     public void setSectionName(String sectionName) {
         this.sectionName = sectionName;
     }
+
+    public String getRoomNumber(){return roomNumber;}
+
+    public void setRoomNumber(String roomNumber) {this.roomNumber = roomNumber;}
+
+    public String getExamRules() { return examRules; }
+
+    public void setExamRules(String examRules) { this.examRules = examRules; }
 }

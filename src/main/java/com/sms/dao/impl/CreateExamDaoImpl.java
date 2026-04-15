@@ -31,38 +31,41 @@ public class CreateExamDaoImpl implements CreateExamDao {
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public int createExam(CreateExamDetails exam,String schoolCode) {
+    public int createExam(CreateExamDetails exam, String schoolCode) {
         String sql = "INSERT INTO exams (exam_type_id, session_id, class_id, section_id, " +
-                "start_date, end_date, status, created_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "start_date, end_date, status, created_date, room_number, exam_rules) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)";
+
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         KeyHolder keyHolder = new GeneratedKeyHolder();
-  try{
-      jdbcTemplate.update(connection -> {
-          // Specify the column name(s) we want to return
-          PreparedStatement ps = connection.prepareStatement(
-                  sql,
-                  new String[]{"exam_id"} // Explicitly request only exam_id
-          );
-          ps.setInt(1, exam.getExamTypeId());
-          ps.setInt(2, exam.getSessionId());
-          ps.setInt(3, exam.getClassId());
-          ps.setObject(4, exam.getSectionId());
-          ps.setDate(5, exam.getStartDate());
-          ps.setDate(6, exam.getEndDate());
-          ps.setString(7, exam.getStatus());
-          ps.setTimestamp(8, exam.getCreatedDate());
-          return ps;
-      }, keyHolder);
-  }catch (Exception e){
-      e.printStackTrace();
-      throw e; // Re-throw the exception for higher-level handling
-  } finally {
-      DatabaseUtil.closeDataSource(jdbcTemplate);
-  }
+
+        try {
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(
+                        sql,
+                        new String[]{"exam_id"}
+                );
+                ps.setInt(1, exam.getExamTypeId());
+                ps.setInt(2, exam.getSessionId());
+                ps.setInt(3, exam.getClassId());
+                ps.setObject(4, exam.getSectionId());
+                ps.setDate(5, exam.getStartDate());
+                ps.setDate(6, exam.getEndDate());
+                ps.setString(7, exam.getStatus());
+                ps.setTimestamp(8, exam.getCreatedDate());
+                ps.setString(9, exam.getRoomNumber());         // room_number
+                ps.setString(10, exam.getExamRules());         // exam_rules::jsonb
+                return ps;
+            }, keyHolder);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+
         return keyHolder.getKey().intValue();
     }
-
     @Override
     public void createExamSubject(ExamSubjectsDetails subject, String schoolCode) {
         String sql = "INSERT INTO exam_subjects (exam_id, subject_id, theory_max_marks, " +
@@ -106,7 +109,9 @@ public class CreateExamDaoImpl implements CreateExamDao {
         e.section_id,
         e.start_date,
         e.end_date,
-        e.status
+        e.status,
+        e.room_number,
+        e.exam_rules
     FROM exams AS e
     JOIN session s ON e.session_id::INTEGER = s.session_id::INTEGER
     JOIN mst_class mc ON e.class_id::INTEGER = mc.class_id::INTEGER
@@ -157,6 +162,8 @@ public class CreateExamDaoImpl implements CreateExamDao {
                             details.setStartDate(rs.getDate("start_date"));
                             details.setEndDate(rs.getDate("end_date"));
                             details.setStatus(rs.getString("status"));
+                            details.setRoomNumber(rs.getString("room_number"));
+                            details.setExamRules(rs.getString("exam_rules"));
                             return details;
                         }
                     }

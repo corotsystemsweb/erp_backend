@@ -2677,15 +2677,6 @@ BEGIN
    )';
    EXECUTE ddl_statement;
 
-    -- 1. exam_type
---       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type(
---           exam_type_id SERIAL PRIMARY KEY,
---           name VARCHAR(50) UNIQUE NOT NULL,
---           session_id INT NOT NULL,
---           description TEXT,
---           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
---       )';
         EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type (
             exam_type_id          SERIAL PRIMARY KEY,
             school_id             INT NOT NULL,
@@ -2766,7 +2757,8 @@ BEGIN
            end_date DATE NOT NULL CHECK (end_date >= start_date),
            status VARCHAR(20) CHECK (status IN (''Scheduled'', ''Ongoing'', ''Completed'')) DEFAULT ''Scheduled'',
            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-           deleted BOOLEAN DEFAULT NULL
+           deleted BOOLEAN DEFAULT NULL,
+           room_number VARCHAR(50) DEFAULT NULL,
        )';
 
        -- 6. exam_subjects
