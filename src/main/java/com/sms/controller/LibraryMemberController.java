@@ -25,7 +25,7 @@ public class LibraryMemberController {
         }
     }
 
-    @GetMapping("/getAll/{schoolCode}")
+    @GetMapping("/getAll/member/{schoolCode}")
     public ResponseEntity<Object> getAll(@PathVariable String schoolCode) {
 
         try {
