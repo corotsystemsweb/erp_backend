@@ -13,6 +13,7 @@ public class ClassSubjectAllocationDetails {
     private String ClassName;
     private String SectionName;
     private String SubjectName;
+    private int studentCount;
 
     public int getSessionId() {
         return sessionId;
@@ -90,5 +91,13 @@ public class ClassSubjectAllocationDetails {
 
     public void setSubjectId(int subjectId) {
         this.subjectId = subjectId;
+    }
+
+    public int getStudentCount() {
+        return studentCount;
+    }
+
+    public void setStudentCount(int studentCount) {
+        this.studentCount = studentCount;
     }
 }

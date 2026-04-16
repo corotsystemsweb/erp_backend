@@ -107,6 +107,8 @@ public class CreateExamDaoImpl implements CreateExamDao {
         ms.section_name,
         e.class_id,
         e.section_id,
+        e.session_id,
+        e.created_date,
         e.start_date,
         e.end_date,
         e.status,
@@ -159,6 +161,8 @@ public class CreateExamDaoImpl implements CreateExamDao {
                             details.setSectionName(rs.getString("section_name"));
                             details.setClassId(rs.getInt("class_id"));
                             details.setSectionId(rs.getInt("section_id"));
+                            details.setSessionId(rs.getInt("session_id"));
+                            details.setCreatedDate(rs.getTimestamp("created_date"));
                             details.setStartDate(rs.getDate("start_date"));
                             details.setEndDate(rs.getDate("end_date"));
                             details.setStatus(rs.getString("status"));
@@ -178,61 +182,66 @@ public class CreateExamDaoImpl implements CreateExamDao {
 
     @Override
     public List<ExamSubjectsDetails> getExamTimeTable(int examId, String schoolCode) {
-        String sql= """
-                SELECT
-                    es.exam_subject_id,
-                    es.exam_date,
-                    ms.subject_name,
-                    es.subject_id,
-                    es.start_time,
-                    es.end_time,
-                    e.class_id,
-                    mc.class_name,
-                    e.section_id,
-                    msct.section_name,
-                    e.exam_type_id,
-                    et.name
-                FROM
-                    exam_subjects es
-                JOIN
-                    mst_subject ms ON es.subject_id = ms.subject_id
-                JOIN
-                    exams e ON es.exam_id = e.exam_id
-                JOIN
-                    mst_class mc ON e.class_id = mc.class_id
-                JOIN
-                    mst_section msct ON e.section_id = msct.section_id
-                JOIN
-                    exam_type et ON e.exam_type_id=et.exam_type_id
-                WHERE
-                    es.exam_id = ?
-                """;
+        String sql = """
+            SELECT
+                es.exam_subject_id,
+                es.exam_id,
+                es.exam_date,
+                ms.subject_name,
+                es.subject_id,
+                es.start_time,
+                es.end_time,
+                es.theory_max_marks,
+                es.practical_max_marks,
+                es.viva_max_marks,
+                es.passing_marks,
+                e.class_id,
+                mc.class_name,
+                e.section_id,
+                msct.section_name,
+                e.exam_type_id,
+                et.name
+            FROM exam_subjects es
+            JOIN mst_subject ms   ON es.subject_id = ms.subject_id
+            JOIN exams e          ON es.exam_id = e.exam_id
+            JOIN mst_class mc     ON e.class_id = mc.class_id
+            JOIN mst_section msct ON e.section_id = msct.section_id
+            JOIN exam_type et     ON e.exam_type_id = et.exam_type_id
+            WHERE es.exam_id = ?
+            """;
+
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
-        List<ExamSubjectsDetails> examSubjectsDetails=null;
-        try{
-            examSubjectsDetails = jdbcTemplate.query(sql, new Object[]{examId},new RowMapper<ExamSubjectsDetails>() {
-                @Override
-                public ExamSubjectsDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
-                    ExamSubjectsDetails esd = new ExamSubjectsDetails();
-                    esd.setExamSubjectId(rs.getInt("exam_subject_id"));
-                    esd.setExamDate(rs.getDate("exam_date"));
-                    esd.setSubjectName(rs.getString("subject_name"));
-                    esd.setSubjectId(rs.getInt("subject_id"));
-                    esd.setStartTime(rs.getTime("start_time"));
-                    esd.setEndTime(rs.getTime("end_time"));
-                    esd.setClassName(rs.getString("class_name"));
-                    esd.setSectionName(rs.getString("section_name"));
-                    esd.setName(rs.getString("name"));
-                    esd.setExamTypeId(rs.getInt("exam_type_id"));
-                    return esd;
-                }
-            });
-        }catch(EmptyResultDataAccessException e){
-            return null;
-        }catch (Exception e){
+        List<ExamSubjectsDetails> examSubjectsDetails = new ArrayList<>();
+        try {
+            examSubjectsDetails = jdbcTemplate.query(sql, new Object[]{examId},
+                    new RowMapper<ExamSubjectsDetails>() {
+                        @Override
+                        public ExamSubjectsDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
+                            ExamSubjectsDetails esd = new ExamSubjectsDetails();
+                            esd.setExamSubjectId(rs.getInt("exam_subject_id"));
+                            esd.setExamId(rs.getInt("exam_id"));                       // ✅
+                            esd.setExamDate(rs.getDate("exam_date"));
+                            esd.setSubjectName(rs.getString("subject_name"));
+                            esd.setSubjectId(rs.getInt("subject_id"));
+                            esd.setStartTime(rs.getTime("start_time"));
+                            esd.setEndTime(rs.getTime("end_time"));
+                            esd.setTheoryMaxMarks(rs.getInt("theory_max_marks"));      // ✅
+                            esd.setPracticalMaxMarks(rs.getInt("practical_max_marks")); // ✅
+                            esd.setVivaMaxMarks(rs.getInt("viva_max_marks"));          // ✅
+                            esd.setPassingMarks(rs.getInt("passing_marks"));           // ✅
+                            esd.setClassName(rs.getString("class_name"));
+                            esd.setSectionName(rs.getString("section_name"));
+                            esd.setName(rs.getString("name"));
+                            esd.setExamTypeId(rs.getInt("exam_type_id"));
+                            return esd;
+                        }
+                    });
+        } catch (EmptyResultDataAccessException e) {
+            return new ArrayList<>();  // null ki jagah empty list return karo
+        } catch (Exception e) {
             e.printStackTrace();
             throw e;
-        }finally {
+        } finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
         return examSubjectsDetails;

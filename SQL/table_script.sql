@@ -2759,6 +2759,7 @@ BEGIN
            created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
            deleted BOOLEAN DEFAULT NULL,
            room_number VARCHAR(50) DEFAULT NULL,
+           exam_rules JSONB DEFAULT ''{"passingCriteria": false, "minAttendance": false, "negativeMarking": false, "graceMarks": false}''
        )';
 
        -- 6. exam_subjects
