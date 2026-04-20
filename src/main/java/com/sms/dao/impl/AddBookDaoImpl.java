@@ -109,7 +109,7 @@ public class AddBookDaoImpl implements AddBookDao {
 
     @Override
     public List<AddBookDetails> getAllBook(String schoolCode) throws Exception {
-        String sql = "SELECT b.book_id, b.school_id, b.session_Id, b.updated_by, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price, b.description, b.publisher, b.year_published, b.edition, b.quantity, b.rack_location, b.status " +
+        String sql = "SELECT b.book_id, b.school_id, b.session_Id, b.updated_by, b.update_date_time, b.book_name, b.book_author_name, b.book_category_id, bc.book_category_name, b.isbn, b.price, b.description, b.publisher, b.year_published, b.edition, b.quantity, b.rack_location, b.status " +
                 "FROM add_new_book b " +
                 "JOIN book_category bc ON b.book_category_id = bc.book_category_id " +
                 "WHERE deleted IS not true " +
@@ -138,6 +138,7 @@ public class AddBookDaoImpl implements AddBookDao {
                    nb.setQuantity(rs.getInt("quantity"));
                    nb.setRackLocation(rs.getString("rack_location"));
                    nb.setStatus(rs.getString("status"));
+                   nb.setUpdateDateTime(rs.getTimestamp("update_date_time"));
                    return nb;
                }
            });

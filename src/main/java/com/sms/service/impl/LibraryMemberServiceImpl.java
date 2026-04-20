@@ -17,7 +17,7 @@ public class LibraryMemberServiceImpl implements LibraryMemberService {
     @Override
     public LibraryMemberDetails addMember(LibraryMemberDetails details, String schoolCode) throws Exception {
 
-        // 🔥 basic validation
+
         if (details.getMemberName() == null || details.getMemberName().isEmpty()) {
             throw new RuntimeException("Member name is required");
         }
