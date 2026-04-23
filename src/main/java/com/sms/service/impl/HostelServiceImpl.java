@@ -1,7 +1,7 @@
 package com.sms.service.impl;
 
 import com.sms.dao.HostelDao;
-import com.sms.model.HostelDetails;
+import com.sms.model.*;
 import com.sms.service.HostelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,5 +40,20 @@ public class HostelServiceImpl implements HostelService {
     @Override
     public boolean deleteHostel(String schoolCode, int hostelId) throws Exception {
         return hostelDao.deleteHostel(schoolCode, hostelId);
+    }
+
+    @Override
+    public RoomDetails addRoom(AddRoomRequest request, String schoolCode) throws Exception {
+        return hostelDao.addRoom(request, schoolCode);
+    }
+
+    @Override
+    public List<RoomDetails> getRoomsByHostel(String schoolCode, int hostelId) throws Exception {
+        return hostelDao.getRoomsByHostel(schoolCode, hostelId);
+    }
+
+    @Override
+    public HostelCapacityStatus getHostelCapacityStatus(String schoolCode, int hostelId) throws Exception {
+        return hostelDao.getHostelCapacityStatus(schoolCode, hostelId);
     }
 }

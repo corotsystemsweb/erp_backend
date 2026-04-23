@@ -18,6 +18,7 @@ public class HostelDetails {
     private String type;  // Boys, Girls, Mixed
     private int totalRooms;
     private int totalCapacity;
+    private int noOfFloors;
     private String wardenName;
     private String contactNumber;
     private String address;

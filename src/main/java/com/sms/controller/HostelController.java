@@ -17,7 +17,7 @@ public class HostelController {
 
     @Autowired
     private HostelService hostelService;
-
+        // add hostel
     @PostMapping("/hostel/add/{schoolCode}")
     public ResponseEntity<Object> addHostel(
             @RequestBody HostelDetails hostelDetails,
@@ -31,7 +31,7 @@ public class HostelController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+   //get hostel by id
     @GetMapping("/hostel/get/{schoolCode}/{hostelId}")
     public ResponseEntity<Object> getHostelById(
             @PathVariable String schoolCode,
@@ -49,7 +49,7 @@ public class HostelController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+  // get all hostels
     @GetMapping("/hostel/all/{schoolCode}")
     public ResponseEntity<Object> getAllHostels(@PathVariable String schoolCode) throws Exception {
         try {
@@ -61,6 +61,64 @@ public class HostelController {
         }
     }
 
+    //  Add Room with Beds
+    @PostMapping("/hostel/room/add/{schoolCode}")
+    public ResponseEntity<Object> addRoom(
+            @RequestBody AddRoomRequest request,
+            @PathVariable String schoolCode
+    ) throws Exception {
+        try {
+            RoomDetails result = hostelService.addRoom(request, schoolCode);
+            if (result != null) {
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            } else {
+                ErrorResponse errorResponse = new ErrorResponse("Failed to add room", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Get Rooms by Hostel ID
+    @GetMapping("/hostel/rooms/{schoolCode}/{hostelId}")
+    public ResponseEntity<Object> getRoomsByHostel(
+            @PathVariable String schoolCode,
+            @PathVariable int hostelId
+    ) throws Exception {
+        try {
+            List<RoomDetails> result = hostelService.getRoomsByHostel(schoolCode, hostelId);
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //Get hostel capacity status
+    @GetMapping("/hostel/capacity-status/{schoolCode}/{hostelId}")
+    public ResponseEntity<Object> getHostelCapacityStatus(
+            @PathVariable String schoolCode,
+            @PathVariable int hostelId
+    ) throws Exception {
+        try {
+            HostelCapacityStatus result = hostelService.getHostelCapacityStatus(schoolCode, hostelId);
+            if (result != null) {
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            } else {
+                ErrorResponse errorResponse = new ErrorResponse("Hostel not found", HttpStatus.NOT_FOUND.value());
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+       // update hostel
     @PutMapping("/hostel/update/{schoolCode}/{hostelId}")
     public ResponseEntity<Object> updateHostel(
             @PathVariable String schoolCode,
@@ -80,7 +138,7 @@ public class HostelController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+     // delete hostel by id
     @DeleteMapping("/hostel/delete/{schoolCode}/{hostelId}")
     public ResponseEntity<Object> deleteHostel(
             @PathVariable String schoolCode,
