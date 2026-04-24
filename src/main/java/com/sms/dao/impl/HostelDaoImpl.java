@@ -4,6 +4,7 @@ import com.sms.dao.HostelDao;
 import com.sms.model.*;
 import com.sms.util.DatabaseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -25,23 +26,49 @@ public class HostelDaoImpl implements HostelDao {
 
     @Override
     public HostelDetails addHostel(HostelDetails hostelDetails, String schoolCode) throws Exception {
-        String sql = "INSERT INTO hostel (name, type, total_rooms, total_capacity, no_of_floors, warden_name, contact_number, address, status, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        // ✅ Updated INSERT query with school_id, session_id, warden_staff_id
+        String sql = "INSERT INTO hostel (school_id, session_id, name, type, total_rooms, total_capacity, no_of_floors, warden_staff_id, warden_name, contact_number, address, status, remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
             KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            // Auto-populate warden_name from staff table if warden_staff_id is provided and warden_name is null
+            String wardenName = hostelDetails.getWardenName();
+            if (hostelDetails.getWardenStaffId() != null && (wardenName == null || wardenName.isEmpty())) {
+                try {
+                    String getStaffNameSql = "SELECT CONCAT(first_name, ' ', last_name) as staff_name FROM staff WHERE staff_id = ?";
+                    wardenName = jdbcTemplate.queryForObject(getStaffNameSql, new Object[]{hostelDetails.getWardenStaffId()}, String.class);
+                } catch (Exception e) {
+                    // Staff not found, use null
+                    wardenName = null;
+                }
+            }
+
+            final String finalWardenName = wardenName;
+
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-                ps.setString(1, hostelDetails.getName());
-                ps.setString(2, hostelDetails.getType());
-                ps.setInt(3, hostelDetails.getTotalRooms());
-                ps.setInt(4, hostelDetails.getTotalCapacity());
-                ps.setInt(5, hostelDetails.getNoOfFloors() > 0 ? hostelDetails.getNoOfFloors() : 1);  // ✅ NEW
-                ps.setString(6, hostelDetails.getWardenName());
-                ps.setString(7, hostelDetails.getContactNumber());
-                ps.setString(8, hostelDetails.getAddress());
-                ps.setString(9, hostelDetails.getStatus() != null ? hostelDetails.getStatus() : "Active");
-                ps.setString(10, hostelDetails.getRemarks());
+                ps.setInt(1, hostelDetails.getSchoolId());
+                ps.setInt(2, hostelDetails.getSessionId());
+                ps.setString(3, hostelDetails.getName());
+                ps.setString(4, hostelDetails.getType());
+                ps.setInt(5, hostelDetails.getTotalRooms());
+                ps.setInt(6, hostelDetails.getTotalCapacity());
+                ps.setInt(7, hostelDetails.getNoOfFloors() > 0 ? hostelDetails.getNoOfFloors() : 1);
+
+                // Handle warden_staff_id (can be null)
+                if (hostelDetails.getWardenStaffId() != null) {
+                    ps.setInt(8, hostelDetails.getWardenStaffId());
+                } else {
+                    ps.setNull(8, Types.INTEGER);
+                }
+
+                ps.setString(9, finalWardenName);
+                ps.setString(10, hostelDetails.getContactNumber());
+                ps.setString(11, hostelDetails.getAddress());
+                ps.setString(12, hostelDetails.getStatus() != null ? hostelDetails.getStatus() : "Active");
+                ps.setString(13, hostelDetails.getRemarks());
                 return ps;
             }, keyHolder);
 
@@ -50,29 +77,39 @@ public class HostelDaoImpl implements HostelDao {
                 int generatedId = ((Number) keys.get("hostel_id")).intValue();
                 hostelDetails.setHostelId(generatedId);
             }
+
+            return hostelDetails;
+
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         } finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
-        return hostelDetails;
     }
-
     @Override
     public HostelDetails getHostelById(String schoolCode, int hostelId) throws Exception {
-        String sql = "SELECT hostel_id, name, type, total_rooms, total_capacity, no_of_floors, warden_name, contact_number, address, status, created_date, updated_date, remarks FROM hostel WHERE hostel_id = ? AND (deleted IS NULL OR deleted = false)";
+        // ✅ Updated SELECT query with new columns
+        String sql = "SELECT hostel_id, school_id, session_id, name, type, total_rooms, total_capacity, no_of_floors, warden_staff_id, warden_name, contact_number, address, status, created_date, updated_date, remarks FROM hostel WHERE hostel_id = ? AND (deleted IS NULL OR deleted = false)";
 
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
             return jdbcTemplate.queryForObject(sql, new Object[]{hostelId}, (rs, rowNum) -> {
                 HostelDetails hostel = new HostelDetails();
                 hostel.setHostelId(rs.getInt("hostel_id"));
+                hostel.setSchoolId(rs.getInt("school_id"));
+                hostel.setSessionId(rs.getInt("session_id"));
                 hostel.setName(rs.getString("name"));
                 hostel.setType(rs.getString("type"));
                 hostel.setTotalRooms(rs.getInt("total_rooms"));
                 hostel.setTotalCapacity(rs.getInt("total_capacity"));
                 hostel.setNoOfFloors(rs.getInt("no_of_floors"));
+
+                int wardenStaffId = rs.getInt("warden_staff_id");
+                if (!rs.wasNull()) {
+                    hostel.setWardenStaffId(wardenStaffId);
+                }
+
                 hostel.setWardenName(rs.getString("warden_name"));
                 hostel.setContactNumber(rs.getString("contact_number"));
                 hostel.setAddress(rs.getString("address"));
@@ -91,18 +128,27 @@ public class HostelDaoImpl implements HostelDao {
 
     @Override
     public List<HostelDetails> getAllHostels(String schoolCode) throws Exception {
-        String sql = "SELECT hostel_id, name, type, total_rooms, total_capacity, no_of_floors, warden_name, contact_number, address, status, created_date, updated_date, remarks FROM hostel WHERE (deleted IS NULL OR deleted = false) ORDER BY hostel_id DESC";
+        // ✅ Updated SELECT query with new columns
+        String sql = "SELECT hostel_id, school_id, session_id, name, type, total_rooms, total_capacity, no_of_floors, warden_staff_id, warden_name, contact_number, address, status, created_date, updated_date, remarks FROM hostel WHERE (deleted IS NULL OR deleted = false) ORDER BY hostel_id DESC";
 
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
             return jdbcTemplate.query(sql, (rs, rowNum) -> {
                 HostelDetails hostel = new HostelDetails();
                 hostel.setHostelId(rs.getInt("hostel_id"));
+                hostel.setSchoolId(rs.getInt("school_id"));
+                hostel.setSessionId(rs.getInt("session_id"));
                 hostel.setName(rs.getString("name"));
                 hostel.setType(rs.getString("type"));
                 hostel.setTotalRooms(rs.getInt("total_rooms"));
                 hostel.setTotalCapacity(rs.getInt("total_capacity"));
                 hostel.setNoOfFloors(rs.getInt("no_of_floors"));
+
+                int wardenStaffId = rs.getInt("warden_staff_id");
+                if (!rs.wasNull()) {
+                    hostel.setWardenStaffId(wardenStaffId);
+                }
+
                 hostel.setWardenName(rs.getString("warden_name"));
                 hostel.setContactNumber(rs.getString("contact_number"));
                 hostel.setAddress(rs.getString("address"));
@@ -119,23 +165,39 @@ public class HostelDaoImpl implements HostelDao {
 
     @Override
     public HostelDetails updateHostel(HostelDetails hostelDetails, String schoolCode) throws Exception {
-        String sql = "UPDATE hostel SET name = ?, type = ?, total_rooms = ?, total_capacity = ?, no_of_floors = ?, warden_name = ?, contact_number = ?, address = ?, status = ?, remarks = ? WHERE hostel_id = ? AND (deleted IS NULL OR deleted = false)";
+        // ✅ Updated UPDATE query with new columns
+        String sql = "UPDATE hostel SET school_id = ?, session_id = ?, name = ?, type = ?, total_rooms = ?, total_capacity = ?, no_of_floors = ?, warden_staff_id = ?, warden_name = ?, contact_number = ?, address = ?, status = ?, remarks = ? WHERE hostel_id = ? AND (deleted IS NULL OR deleted = false)";
 
         JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
         try {
+            // Auto-populate warden_name from staff table if warden_staff_id is provided
+            String wardenName = hostelDetails.getWardenName();
+            if (hostelDetails.getWardenStaffId() != null && (wardenName == null || wardenName.isEmpty())) {
+                try {
+                    String getStaffNameSql = "SELECT CONCAT(first_name, ' ', last_name) as staff_name FROM staff WHERE staff_id = ?";
+                    wardenName = jdbcTemplate.queryForObject(getStaffNameSql, new Object[]{hostelDetails.getWardenStaffId()}, String.class);
+                } catch (Exception e) {
+                    wardenName = null;
+                }
+            }
+
             int rowsAffected = jdbcTemplate.update(sql,
+                    hostelDetails.getSchoolId(),
+                    hostelDetails.getSessionId(),
                     hostelDetails.getName(),
                     hostelDetails.getType(),
                     hostelDetails.getTotalRooms(),
                     hostelDetails.getTotalCapacity(),
                     hostelDetails.getNoOfFloors(),
-                    hostelDetails.getWardenName(),
+                    hostelDetails.getWardenStaffId(),
+                    wardenName,
                     hostelDetails.getContactNumber(),
                     hostelDetails.getAddress(),
                     hostelDetails.getStatus(),
                     hostelDetails.getRemarks(),
                     hostelDetails.getHostelId()
             );
+
             if (rowsAffected > 0) {
                 return hostelDetails;
             }
@@ -144,7 +206,6 @@ public class HostelDaoImpl implements HostelDao {
             DatabaseUtil.closeDataSource(jdbcTemplate);
         }
     }
-
     @Override
     public boolean deleteHostel(String schoolCode, int hostelId) throws Exception {
         // Soft delete - just set deleted flag
@@ -358,6 +419,125 @@ public class HostelDaoImpl implements HostelDao {
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+
+    @Override
+    public HostelFeesDetails addHostelFees(AddHostelFeesRequest request, String schoolCode) throws Exception {
+        // UPSERT with school_id and session_id
+        String sql = "INSERT INTO hostel_fees (school_id, session_id, hostel_id, room_type, monthly_fee, security_deposit, admission_fee) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                "ON CONFLICT (school_id, session_id, hostel_id, room_type) DO UPDATE SET " +
+                "monthly_fee = EXCLUDED.monthly_fee, " +
+                "security_deposit = EXCLUDED.security_deposit, " +
+                "admission_fee = EXCLUDED.admission_fee, " +
+                "updated_date = CURRENT_TIMESTAMP " +
+                "RETURNING fee_id, created_date, updated_date";
+
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try {
+            HostelFeesDetails result = new HostelFeesDetails();
+
+            jdbcTemplate.queryForObject(sql, new Object[]{
+                    request.getSchoolId(),
+                    request.getSessionId(),
+                    request.getHostelId(),
+                    request.getRoomType(),
+                    request.getMonthlyFee(),
+                    request.getSecurityDeposit(),
+                    request.getAdmissionFee()
+            }, (rs, rowNum) -> {
+                result.setFeeId(rs.getInt("fee_id"));
+                result.setCreatedDate(rs.getTimestamp("created_date"));
+                result.setUpdatedDate(rs.getTimestamp("updated_date"));
+                return result;
+            });
+
+            // Get hostel name for response
+            String hostelNameSql = "SELECT name FROM hostel WHERE hostel_id = ?";
+            String hostelName = jdbcTemplate.queryForObject(hostelNameSql, new Object[]{request.getHostelId()}, String.class);
+
+            result.setSchoolId(request.getSchoolId());
+            result.setSessionId(request.getSessionId());
+            result.setHostelId(request.getHostelId());
+            result.setHostelName(hostelName);
+            result.setRoomType(request.getRoomType());
+            result.setMonthlyFee(request.getMonthlyFee());
+            result.setSecurityDeposit(request.getSecurityDeposit());
+            result.setAdmissionFee(request.getAdmissionFee());
+
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+
+    @Override
+    public List<HostelFeesDetails> getHostelFeesByHostel(String schoolCode, int hostelId) throws Exception {
+        String sql = "SELECT hf.fee_id, hf.school_id, hf.session_id, hf.hostel_id, h.name as hostel_name, hf.room_type, " +
+                "hf.monthly_fee, hf.security_deposit, hf.admission_fee, " +
+                "hf.created_date, hf.updated_date " +
+                "FROM hostel_fees hf " +
+                "JOIN hostel h ON hf.hostel_id = h.hostel_id " +
+                "WHERE hf.hostel_id = ? AND (hf.deleted IS NULL OR hf.deleted = false) " +
+                "ORDER BY FIELD(hf.room_type, 'Single', 'Double', 'Triple', 'Quad')";
+
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try {
+            return jdbcTemplate.query(sql, new Object[]{hostelId}, (rs, rowNum) -> {
+                HostelFeesDetails fees = new HostelFeesDetails();
+                fees.setFeeId(rs.getInt("fee_id"));
+                fees.setSchoolId(rs.getInt("school_id"));
+                fees.setSessionId(rs.getInt("session_id"));
+                fees.setHostelId(rs.getInt("hostel_id"));
+                fees.setHostelName(rs.getString("hostel_name"));
+                fees.setRoomType(rs.getString("room_type"));
+                fees.setMonthlyFee(rs.getDouble("monthly_fee"));
+                fees.setSecurityDeposit(rs.getDouble("security_deposit"));
+                fees.setAdmissionFee(rs.getDouble("admission_fee"));
+                fees.setCreatedDate(rs.getTimestamp("created_date"));
+                fees.setUpdatedDate(rs.getTimestamp("updated_date"));
+                return fees;
+            });
+        } finally {
+            DatabaseUtil.closeDataSource(jdbcTemplate);
+        }
+    }
+
+    @Override
+    public HostelFeesDetails getHostelFeesByHostelAndRoomType(String schoolCode, int hostelId, String roomType) throws Exception {
+        String sql = "SELECT hf.fee_id, hf.school_id, hf.session_id, hf.hostel_id, h.name as hostel_name, hf.room_type, " +
+                "hf.monthly_fee, hf.security_deposit, hf.admission_fee, " +
+                "hf.created_date, hf.updated_date " +
+                "FROM hostel_fees hf " +
+                "JOIN hostel h ON hf.hostel_id = h.hostel_id " +
+                "WHERE hf.hostel_id = ? AND hf.room_type = ? AND (hf.deleted IS NULL OR hf.deleted = false)";
+
+        JdbcTemplate jdbcTemplate = DatabaseUtil.getJdbctemplateForSchool(schoolCode);
+        try {
+            return jdbcTemplate.queryForObject(sql, new Object[]{hostelId, roomType}, (rs, rowNum) -> {
+                HostelFeesDetails fees = new HostelFeesDetails();
+                fees.setFeeId(rs.getInt("fee_id"));
+                fees.setSchoolId(rs.getInt("school_id"));
+                fees.setSessionId(rs.getInt("session_id"));
+                fees.setHostelId(rs.getInt("hostel_id"));
+                fees.setHostelName(rs.getString("hostel_name"));
+                fees.setRoomType(rs.getString("room_type"));
+                fees.setMonthlyFee(rs.getDouble("monthly_fee"));
+                fees.setSecurityDeposit(rs.getDouble("security_deposit"));
+                fees.setAdmissionFee(rs.getDouble("admission_fee"));
+                fees.setCreatedDate(rs.getTimestamp("created_date"));
+                fees.setUpdatedDate(rs.getTimestamp("updated_date"));
+                return fees;
+            });
+        } catch (EmptyResultDataAccessException e) {
             return null;
         } finally {
             DatabaseUtil.closeDataSource(jdbcTemplate);

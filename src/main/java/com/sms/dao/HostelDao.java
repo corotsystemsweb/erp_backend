@@ -12,4 +12,7 @@ public interface HostelDao {
     RoomDetails addRoom(AddRoomRequest request, String schoolCode) throws Exception;
     List<RoomDetails> getRoomsByHostel(String schoolCode, int hostelId) throws Exception;
     HostelCapacityStatus getHostelCapacityStatus(String schoolCode, int hostelId) throws Exception;
+    HostelFeesDetails addHostelFees(AddHostelFeesRequest request, String schoolCode) throws Exception;
+    List<HostelFeesDetails> getHostelFeesByHostel(String schoolCode, int hostelId) throws Exception;
+    HostelFeesDetails getHostelFeesByHostelAndRoomType(String schoolCode, int hostelId, String roomType) throws Exception;
 }

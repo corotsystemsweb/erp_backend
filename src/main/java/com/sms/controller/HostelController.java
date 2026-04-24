@@ -157,4 +157,63 @@ public class HostelController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // Add or Update Hostel Fees
+    @PostMapping("/hostel/fees/add/{schoolCode}")
+    public ResponseEntity<Object> addHostelFees(
+            @RequestBody AddHostelFeesRequest request,
+            @PathVariable String schoolCode
+    ) throws Exception {
+        try {
+            HostelFeesDetails result = hostelService.addHostelFees(request, schoolCode);
+            if (result != null) {
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            } else {
+                ErrorResponse errorResponse = new ErrorResponse("Failed to add/update hostel fees", HttpStatus.INTERNAL_SERVER_ERROR.value());
+                return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //  Get Hostel Fees by Hostel ID
+    @GetMapping("/hostel/fees/{schoolCode}/{hostelId}")
+    public ResponseEntity<Object> getHostelFeesByHostel(
+            @PathVariable String schoolCode,
+            @PathVariable int hostelId
+    ) throws Exception {
+        try {
+            List<HostelFeesDetails> result = hostelService.getHostelFeesByHostel(schoolCode, hostelId);
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    //  Get Hostel Fees by Hostel ID and Room Type
+    @GetMapping("/hostel/fees/{schoolCode}/{hostelId}/{roomType}")
+    public ResponseEntity<Object> getHostelFeesByHostelAndRoomType(
+            @PathVariable String schoolCode,
+            @PathVariable int hostelId,
+            @PathVariable String roomType
+    ) throws Exception {
+        try {
+            HostelFeesDetails result = hostelService.getHostelFeesByHostelAndRoomType(schoolCode, hostelId, roomType);
+            if (result != null) {
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            } else {
+                ErrorResponse errorResponse = new ErrorResponse("Fees not found for this hostel and room type", HttpStatus.NOT_FOUND.value());
+                return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

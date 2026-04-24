@@ -1,3 +1,4 @@
+// com/sms/model/HostelFeesDetails.java
 package com.sms.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,22 +13,17 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-public class HostelDetails {
-    private int hostelId;
+public class HostelFeesDetails {
+    private int feeId;
     private int schoolId;
     private int sessionId;
-    private String name;
-    private String type;  // Boys, Girls, Mixed
-    private int totalRooms;
-    private int totalCapacity;
-    private int noOfFloors;
-    private Integer wardenStaffId;
-    private String wardenName;
-    private String contactNumber;
-    private String address;
-    private String status;  // Active, Inactive, Maintenance
+    private int hostelId;
+    private String hostelName;  // Denormalized for response
+    private String roomType;    // Single, Double, Triple, Quad
+    private double monthlyFee;
+    private double securityDeposit;
+    private double admissionFee;
     private Date createdDate;
     private Date updatedDate;
     private Boolean deleted;
-    private String remarks;
 }

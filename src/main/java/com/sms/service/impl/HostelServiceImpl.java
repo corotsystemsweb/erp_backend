@@ -56,4 +56,19 @@ public class HostelServiceImpl implements HostelService {
     public HostelCapacityStatus getHostelCapacityStatus(String schoolCode, int hostelId) throws Exception {
         return hostelDao.getHostelCapacityStatus(schoolCode, hostelId);
     }
+
+    @Override
+    public HostelFeesDetails addHostelFees(AddHostelFeesRequest request, String schoolCode) throws Exception {
+        return hostelDao.addHostelFees(request, schoolCode);
+    }
+
+    @Override
+    public List<HostelFeesDetails> getHostelFeesByHostel(String schoolCode, int hostelId) throws Exception {
+        return hostelDao.getHostelFeesByHostel(schoolCode, hostelId);
+    }
+
+    @Override
+    public HostelFeesDetails getHostelFeesByHostelAndRoomType(String schoolCode, int hostelId, String roomType) throws Exception {
+        return hostelDao.getHostelFeesByHostelAndRoomType(schoolCode, hostelId, roomType);
+    }
 }
