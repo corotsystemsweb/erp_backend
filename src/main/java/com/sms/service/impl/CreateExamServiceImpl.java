@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -37,8 +38,28 @@ public class CreateExamServiceImpl implements CreateExamService {
     }
 
     @Override
-    public List<CreateExamDetails> getAllExamDetails(int sessionId, String schoolCode,Integer classId, Integer sectionId,String examName) {
-        return createExamDao.getAllExamDetails(sessionId,schoolCode,classId,sectionId,examName);
+    public List<CreateExamDetails> getAllExamDetails(int sessionId, String schoolCode,
+                                                     Integer classId, Integer sectionId,
+                                                     String examName) {
+        // Step 1: Fetch all exams (sessionId, createdDate ab aa rahe hain)
+        List<CreateExamDetails> examList = createExamDao.getAllExamDetails(
+                sessionId, schoolCode, classId, sectionId, examName
+        );
+
+        // Step 2: Har exam ke liye subjects fetch karo  ✅ FIX 3
+        for (CreateExamDetails exam : examList) {
+            try {
+                List<ExamSubjectsDetails> subjects = createExamDao.getExamTimeTable(
+                        exam.getExamId(), schoolCode
+                );
+                exam.setSubjects(subjects);
+            } catch (Exception e) {
+                // Subjects fetch fail ho toh empty list set karo, null nahi
+                exam.setSubjects(new ArrayList<>());
+            }
+        }
+
+        return examList;
     }
 
     @Override
