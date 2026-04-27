@@ -16,6 +16,8 @@ public enum Message {
     ADD_IMAGE_SUCCESS("Image uploaded successfully"),
     ADD_IMAGE_FAILED("Image is not uploaded"),
     DELETE_STUDENT_SUCCESS("Student details is deleted successfully"),
+    RESTORE_STUDENT_SUCCESS("Student is restored successfully"),
+    RESTORE_STUDENT_FAILED("Failed to restore student"),
     DELETE_STUDENT_FAILED("Student details is not deleted"),
     DELETE_TEACHER_SUCCESS("Teacher details is deleted successfully"),
     DELETE_TEACHER_FAILED("Teacher details is not deleted"),

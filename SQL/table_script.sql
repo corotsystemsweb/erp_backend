@@ -242,7 +242,8 @@ CREATE TABLE session (
     school_id int not null,
     academic_session VARCHAR(255) NOT NULL,
     start_date DATE,
-    end_date DATE
+    end_date DATE,
+    status VARCHAR(255) DEFAULT NULL
 );
 
 /*script for school_details*/
@@ -1763,7 +1764,8 @@ BEGIN
         school_id int not null,
         academic_session VARCHAR(255) NOT NULL,
         start_date DATE,
-        end_date DATE
+        end_date DATE,
+        status VARCHAR(255) DEFAULT NULL
     )';
     EXECUTE ddl_statement;
 
