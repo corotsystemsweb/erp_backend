@@ -957,6 +957,194 @@ CREATE TABLE add_supplier (
     deleted boolean default null
 );
 
+/*table for hostel*/
+CREATE TABLE hostel (
+                        hostel_id        SERIAL PRIMARY KEY,
+                        school_id        INT NOT NULL,
+                        session_id       INT NOT NULL,
+                        name             VARCHAR(100) NOT NULL,
+                        type             VARCHAR(20)  NOT NULL CHECK (type IN ('Boys', 'Girls', 'Mixed')),
+                        total_rooms      INT          DEFAULT 0 CHECK (total_rooms >= 0),
+                        total_capacity   INT          DEFAULT 0 CHECK (total_capacity >= 0),
+                        warden_name      VARCHAR(100),
+                        warden_staff_id  INT NOT NULL,
+                        contact_number   VARCHAR(20),
+                        address          TEXT,
+                        status           VARCHAR(20)  CHECK (status IN ('Active', 'Inactive', 'Maintenance')) DEFAULT 'Active',
+                        created_date     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                        updated_date     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                        deleted          BOOLEAN      DEFAULT NULL,
+                        remarks          TEXT         DEFAULT NULL,
+                        no_of_floors     INT          DEFAULT 1 CHECK (no_of_floors >= 1)
+);
+
+/*table for hostel rooms*/
+CREATE TABLE hostel_rooms (
+                              room_id           SERIAL PRIMARY KEY,
+                              hostel_id         INT          NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+                              room_number       VARCHAR(20)  NOT NULL,
+                              floor_number      VARCHAR(50)  DEFAULT 'Ground Floor',
+                              room_type         VARCHAR(20)  NOT NULL CHECK (room_type IN ('Single', 'Double', 'Triple', 'Quad')),
+                              capacity          INT          NOT NULL CHECK (capacity > 0),
+                              current_occupancy INT          DEFAULT 0 CHECK (current_occupancy >= 0),
+                              total_beds        INT          DEFAULT 0 CHECK (total_beds >= 0),
+                              status            VARCHAR(20)  CHECK (status IN ('Available', 'Occupied', 'Maintenance', 'Reserved')) DEFAULT 'Available',
+                              rent_amount       DECIMAL(10,2) DEFAULT 0,
+                              is_active         BOOLEAN      DEFAULT TRUE,
+                              created_date      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                              updated_date      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+                              deleted           BOOLEAN      DEFAULT NULL,
+                              remarks           TEXT         DEFAULT NULL,
+                              UNIQUE(hostel_id, room_number)
+);
+
+/*table for hostel_beds*/
+CREATE TABLE hostel_beds (
+                             bed_id         SERIAL PRIMARY KEY,
+                             room_id        INT         NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE CASCADE,
+                             bed_number     VARCHAR(10) NOT NULL,
+                             bed_label      VARCHAR(5)  NOT NULL,
+                             status         VARCHAR(20) CHECK (status IN ('Available', 'Occupied', 'Reserved', 'Maintenance')) DEFAULT 'Available',
+                             student_id     INT         DEFAULT NULL,
+                             allocated_date DATE        DEFAULT NULL,
+                             created_date   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+                             updated_date   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+                             deleted        BOOLEAN     DEFAULT NULL,
+                             UNIQUE(room_id, bed_number)
+);
+
+/*table for hostel_fees*/
+CREATE TABLE hostel_fees (
+                             fee_id            SERIAL PRIMARY KEY,
+                             hostel_id         INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+                             room_type         VARCHAR(20)   NOT NULL CHECK (room_type IN ('Single', 'Double', 'Triple', 'Quad')),
+                             monthly_fee       DECIMAL(10,2) DEFAULT 0 CHECK (monthly_fee >= 0),
+                             security_deposit  DECIMAL(10,2) DEFAULT 0 CHECK (security_deposit >= 0),
+                             admission_fee     DECIMAL(10,2) DEFAULT 0 CHECK (admission_fee >= 0),
+                             created_date      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                             updated_date      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                             deleted           BOOLEAN       DEFAULT NULL,
+                             school_id         INT           NOT NULL,
+                             session_id        INT           NOT NULL,
+                             CONSTRAINT unique_hostel_fees_per_school_session UNIQUE (school_id, session_id, hostel_id, room_type)
+);
+
+/*table for hostel_allocations*/
+CREATE TABLE hostel_allocations (
+                                    allocation_id                  SERIAL PRIMARY KEY,
+                                    student_id                     INT           NOT NULL,
+                                    hostel_id                      INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE RESTRICT,
+                                    room_id                        INT           NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE RESTRICT,
+                                    bed_id                         INT           NOT NULL REFERENCES hostel_beds(bed_id) ON DELETE RESTRICT,
+                                    hostel_name_snapshot           VARCHAR(100)  NOT NULL,
+                                    room_no_snapshot               VARCHAR(20)   NOT NULL,
+                                    bed_no_snapshot                VARCHAR(10)   NOT NULL,
+                                    monthly_fee_snapshot           DECIMAL(10,2) DEFAULT 0 CHECK (monthly_fee_snapshot >= 0),
+                                    current_hostel_name            VARCHAR(100)  NOT NULL,
+                                    current_room_no                VARCHAR(20)   NOT NULL,
+                                    current_bed_no                 VARCHAR(10)   NOT NULL,
+                                    current_monthly_fee            DECIMAL(10,2) DEFAULT 0 CHECK (current_monthly_fee >= 0),
+                                    allocation_date                DATE          DEFAULT CURRENT_DATE,
+                                    vacate_date                    DATE          DEFAULT NULL,
+                                    vacate_reason                  TEXT          DEFAULT NULL,
+                                    refund_status                  VARCHAR(30)   CHECK (refund_status IN ('Pending', 'Refunded', 'Adjusted against Dues', 'Forfeited', 'Not Applicable')) DEFAULT 'Pending',
+                                    refund_amount                  DECIMAL(10,2) DEFAULT 0 CHECK (refund_amount >= 0),
+                                    vacate_remarks                 TEXT          DEFAULT NULL,
+                                    vacated_by                     INT           DEFAULT NULL,
+                                    inspection_done                BOOLEAN       DEFAULT FALSE,
+                                    inspection_remarks             TEXT          DEFAULT NULL,
+                                    transferred_to_allocation_id   INT           DEFAULT NULL,
+                                    transferred_from_allocation_id INT           DEFAULT NULL,
+                                    transfer_date                  DATE          DEFAULT NULL,
+                                    transfer_reason                TEXT          DEFAULT NULL,
+                                    previous_hostel_id             INT           DEFAULT NULL,
+                                    previous_room_id               INT           DEFAULT NULL,
+                                    previous_bed_id                INT           DEFAULT NULL,
+                                    previous_hostel_name           VARCHAR(100)  DEFAULT NULL,
+                                    previous_room_no               VARCHAR(20)   DEFAULT NULL,
+                                    previous_bed_no                VARCHAR(10)   DEFAULT NULL,
+                                    status                         VARCHAR(20)   CHECK (status IN ('Active', 'Vacated', 'Transferred', 'Expelled')) DEFAULT 'Active',
+                                    remarks                        TEXT          DEFAULT NULL,
+                                    created_date                   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                                    updated_date                   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                                    deleted                        BOOLEAN       DEFAULT NULL,
+                                    CONSTRAINT fk_allocation_hostel  FOREIGN KEY (hostel_id)  REFERENCES hostel(hostel_id),
+                                    CONSTRAINT fk_allocation_room    FOREIGN KEY (room_id)    REFERENCES hostel_rooms(room_id),
+                                    CONSTRAINT fk_allocation_bed     FOREIGN KEY (bed_id)     REFERENCES hostel_beds(bed_id),
+                                    CONSTRAINT fk_transfer_to        FOREIGN KEY (transferred_to_allocation_id)   REFERENCES hostel_allocations(allocation_id),
+                                    CONSTRAINT fk_transfer_from      FOREIGN KEY (transferred_from_allocation_id) REFERENCES hostel_allocations(allocation_id),
+                                    CONSTRAINT fk_previous_hostel    FOREIGN KEY (previous_hostel_id) REFERENCES hostel(hostel_id),
+                                    CONSTRAINT fk_previous_room      FOREIGN KEY (previous_room_id)   REFERENCES hostel_rooms(room_id),
+                                    CONSTRAINT fk_previous_bed       FOREIGN KEY (previous_bed_id)    REFERENCES hostel_beds(bed_id)
+);
+
+/*table for hostel visitors log*/
+CREATE TABLE IF NOT EXISTS hostel_visitors_log (
+                                                   visitor_log_id             SERIAL PRIMARY KEY,
+                                                   visitor_name               VARCHAR(100) NOT NULL,
+    visitor_phone              VARCHAR(20)  NOT NULL,
+    visitor_email              VARCHAR(100) DEFAULT NULL,
+    visitor_id_card_type       VARCHAR(30)  DEFAULT NULL CHECK (visitor_id_card_type IN ('Aadhar', 'Driving License', 'Passport', 'Voter ID', 'Other')),
+    visitor_id_card_number     VARCHAR(50)  DEFAULT NULL,
+    visitor_photo_url          TEXT         DEFAULT NULL,
+    student_id                 INT          NOT NULL,
+    student_name               VARCHAR(100) NOT NULL,
+    student_room_no            VARCHAR(20)  DEFAULT NULL,
+    relation                   VARCHAR(30)  NOT NULL CHECK (relation IN ('Parent', 'Relative', 'Guardian', 'Vendor/Service', 'Friend', 'Other')) DEFAULT 'Parent',
+    purpose                    TEXT         NOT NULL,
+    check_in_time              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    check_out_time             TIMESTAMP    DEFAULT NULL,
+    expected_duration_minutes  INT          DEFAULT 30,
+    approved_by                INT          DEFAULT NULL,
+    approved_by_name           VARCHAR(100) DEFAULT NULL,
+    approval_time              TIMESTAMP    DEFAULT NULL,
+    approval_remarks           TEXT         DEFAULT NULL,
+    id_verified                BOOLEAN      DEFAULT FALSE,
+    belongings_declared        TEXT         DEFAULT NULL,
+    security_remarks           TEXT         DEFAULT NULL,
+    status                     VARCHAR(20)  CHECK (status IN ('Inside', 'Checked Out', 'Expired', 'Cancelled')) DEFAULT 'Inside',
+    vehicle_number             VARCHAR(20)  DEFAULT NULL,
+    total_persons              INT          DEFAULT 1 CHECK (total_persons >= 1),
+    created_date               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_date               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    created_by                 INT          DEFAULT NULL,
+    deleted                    BOOLEAN      DEFAULT NULL,
+    CONSTRAINT fk_visitor_student FOREIGN KEY (student_id) REFERENCES student_personal_details(student_id) ON DELETE RESTRICT
+    );
+
+/*table for hostel_maintenance*/
+CREATE TABLE hostel_maintenance (
+                                    maintenance_id             SERIAL PRIMARY KEY,
+                                    hostel_id                  INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+                                    room_id                    INT           NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE CASCADE,
+                                    hostel_name                VARCHAR(100)  NOT NULL,
+                                    room_no                    VARCHAR(20)   NOT NULL,
+                                    issue_type                 VARCHAR(50)   NOT NULL CHECK (issue_type IN ('Plumbing', 'Electrical', 'AC', 'Furniture', 'Cleaning', 'Painting', 'Structural', 'Other')),
+                                    priority                   VARCHAR(20)   NOT NULL CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')) DEFAULT 'Medium',
+                                    description                TEXT          NOT NULL,
+                                    status                     VARCHAR(30)   CHECK (status IN ('Pending', 'In Progress', 'Completed', 'Cancelled', 'On Hold')) DEFAULT 'Pending',
+                                    assigned_to                INT           DEFAULT NULL,
+                                    assigned_to_name           VARCHAR(100)  DEFAULT NULL,
+                                    assigned_date              DATE          DEFAULT NULL,
+                                    estimated_completion_date  DATE          DEFAULT NULL,
+                                    actual_completion_date     DATE          DEFAULT NULL,
+                                    completion_remarks         TEXT          DEFAULT NULL,
+                                    completed_by               INT           DEFAULT NULL,
+                                    completed_by_name          VARCHAR(100)  DEFAULT NULL,
+                                    estimated_cost             DECIMAL(10,2) DEFAULT 0 CHECK (estimated_cost >= 0),
+                                    actual_cost                DECIMAL(10,2) DEFAULT 0 CHECK (actual_cost >= 0),
+                                    feedback                   TEXT          DEFAULT NULL,
+                                    rating                     INT           DEFAULT NULL CHECK (rating >= 1 AND rating <= 5),
+                                    requested_by               INT           DEFAULT NULL,
+                                    requested_by_name          VARCHAR(100)  DEFAULT NULL,
+                                    contact_number             VARCHAR(20)   DEFAULT NULL,
+                                    created_date               TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                                    updated_date               TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+                                    deleted                    BOOLEAN       DEFAULT NULL,
+                                    CONSTRAINT fk_maintenance_hostel FOREIGN KEY (hostel_id) REFERENCES hostel(hostel_id),
+                                    CONSTRAINT fk_maintenance_room   FOREIGN KEY (room_id)   REFERENCES hostel_rooms(room_id)
+);
+
  /*table for inventory_category*/
 CREATE TABLE inventory_category (
     inventory_category_id SERIAL PRIMARY KEY,
@@ -1165,13 +1353,22 @@ CREATE TABLE staff_attendance (
 );
 
 CREATE TABLE exam_type(
- exam_type_id SERIAL PRIMARY KEY,
- name VARCHAR(50) UNIQUE NOT NULL,         -- Changed from exam_type to name
- session_id int NOT NULL,
- description TEXT,                         -- Changed to TEXT for longer descriptions
- created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          exam_type_id SERIAL PRIMARY KEY,
+                          session_id int NOT NULL,
+                          school_id int NOT NULL
+                              name VARCHAR(100) UNIQUE NOT NULL,         -- Changed from exam_type to name
+                          description  TEXT DEFAULT NULL,                         -- Changed to TEXT for longer descriptions
+                          category  VARCHAR(50) NOT NULL DEFAULT ''major'',
+                          weightage_percent DECIMAL(5,2) DEFAULT NULL,
+                          passing_marks_percent DECIMAL(5,2) DEFAULT NULL,
+                          grading_system VARCHAR(50) DEFAULT ''CBSE Standard Grade'',
+                          exam_options JSONB DEFAULT NULL,
+                          status VARCHAR(20)  DEFAULT ''ACTIVE'' CHECK (status IN (''ACTIVE'', ''INACTIVE'')),
+                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          CONSTRAINT unique_exam_type UNIQUE (school_id, session_id, name)
 );
+
 
 CREATE TABLE mst_grade (
     grade_id SERIAL PRIMARY KEY,
@@ -1214,16 +1411,19 @@ INSERT INTO mst_grade (grade_name, min_percentage, max_percentage) VALUES
 
 
 CREATE TABLE exams (
-    exam_id SERIAL PRIMARY KEY,
-    exam_type_id int NOT NULL,
-    session_id int NOT NULL ,
-    class_id INT NOT NULL,
-    section_id INT default null,
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL CHECK (end_date >= start_date),
-    status VARCHAR(20) CHECK (status IN ('Scheduled', 'Ongoing', 'Completed')) DEFAULT 'Scheduled',
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted boolean DEFAULT null
+                       exam_id SERIAL PRIMARY KEY,
+                       exam_type_id int NOT NULL,
+                       session_id int NOT NULL ,
+                       class_id INT NOT NULL,
+
+                       section_id INT default null,
+                       start_date DATE NOT NULL,
+                       end_date DATE NOT NULL CHECK (end_date >= start_date),
+                       status VARCHAR(20) CHECK (status IN ('Scheduled', 'Ongoing', 'Completed')) DEFAULT 'Scheduled',
+                       created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       deleted boolean DEFAULT null,
+                       room_number VARCHAR(50) DEFAULT NULL,
+                       exam_rules JSONB DEFAULT '{"passingCriteria": false, "minAttendance": false, "negativeMarking": false, "graceMarks": false}',
 );
 
 CREATE TABLE exam_subjects (
@@ -2780,16 +2980,25 @@ EXECUTE ddl_statement;
    EXECUTE ddl_statement;
 
     -- 1. exam_type
-       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type(
-           exam_type_id SERIAL PRIMARY KEY,
-           name VARCHAR(50) UNIQUE NOT NULL,
-           session_id INT NOT NULL,
-           description TEXT,
-           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-       )';
+EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_type (
+    exam_type_id SERIAL PRIMARY KEY,
+     session_id int NOT NULL,
+     school_id int NOT NULL
+     name VARCHAR(100) UNIQUE NOT NULL,         -- Changed from exam_type to name
+     description  TEXT DEFAULT NULL,                         -- Changed to TEXT for longer descriptions
+     category  VARCHAR(50) NOT NULL DEFAULT ''major'',
+     weightage_percent DECIMAL(5,2) DEFAULT NULL,
+     passing_marks_percent DECIMAL(5,2) DEFAULT NULL,
+     grading_system VARCHAR(50) DEFAULT ''CBSE Standard Grade'',
+     exam_options JSONB DEFAULT NULL,
+     status VARCHAR(20)  DEFAULT ''ACTIVE'' CHECK (status IN (''ACTIVE'', ''INACTIVE'')),
+     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     CONSTRAINT unique_exam_type UNIQUE (school_id, session_id, name)
+)';
 
-       -- 2. mst_grade (ग्रेड डेटा के साथ)
+
+-- 2. mst_grade (ग्रेड डेटा के साथ)
        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.mst_grade (
            grade_id SERIAL PRIMARY KEY,
            grade_name VARCHAR(10) NOT NULL UNIQUE,
@@ -2842,18 +3051,208 @@ EXECUTE ddl_statement;
        )';
 
        -- 5. exams
-       EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exams (
-           exam_id SERIAL PRIMARY KEY,
-           exam_type_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.exam_type(exam_type_id),
-           session_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.session(session_id),
-           class_id INT NOT NULL,
-           section_id INT DEFAULT NULL,
-           start_date DATE NOT NULL,
-           end_date DATE NOT NULL CHECK (end_date >= start_date),
-           status VARCHAR(20) CHECK (status IN (''Scheduled'', ''Ongoing'', ''Completed'')) DEFAULT ''Scheduled'',
-           created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-           deleted BOOLEAN DEFAULT NULL
-       )';
+EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exams (
+    exam_id SERIAL PRIMARY KEY,
+    exam_type_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.exam_type(exam_type_id),
+    session_id INT NOT NULL REFERENCES ' || quote_ident(schema_name) || '.session(session_id),
+    class_id INT NOT NULL,
+    section_id INT DEFAULT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL CHECK (end_date >= start_date),
+    status VARCHAR(20) CHECK (status IN (''Scheduled'', ''Ongoing'', ''Completed'')) DEFAULT ''Scheduled'',
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT NULL,
+    room_number VARCHAR(50) DEFAULT NULL,
+    exam_rules JSONB DEFAULT ''{"passingCriteria": false, "minAttendance": false, "negativeMarking": false, "graceMarks": false}''
+)';
+
+-- hostel creation
+EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.hostel(
+       hostel_id        SERIAL PRIMARY KEY,
+           school_id        INT NOT NULL,
+           session_id       INT NOT NULL,
+           name             VARCHAR(100) NOT NULL,
+           type             VARCHAR(20)  NOT NULL CHECK (type IN ('Boys', 'Girls', 'Mixed')),
+           total_rooms      INT          DEFAULT 0 CHECK (total_rooms >= 0),
+           total_capacity   INT          DEFAULT 0 CHECK (total_capacity >= 0),
+           warden_name      VARCHAR(100),
+           warden_staff_id  INT NOT NULL,
+           contact_number   VARCHAR(20),
+           address          TEXT,
+           status           VARCHAR(20)  CHECK (status IN ('Active', 'Inactive', 'Maintenance')) DEFAULT 'Active',
+           created_date     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+           updated_date     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+           deleted          BOOLEAN      DEFAULT NULL,
+           remarks          TEXT         DEFAULT NULL,
+           no_of_floors     INT          DEFAULT 1 CHECK (no_of_floors >= 1))';
+
+--hostel_rooms
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_rooms(
+           room_id           SERIAL PRIMARY KEY,
+               hostel_id         INT          NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+               room_number       VARCHAR(20)  NOT NULL,
+               floor_number      VARCHAR(50)  DEFAULT 'Ground Floor',
+               room_type         VARCHAR(20)  NOT NULL CHECK (room_type IN ('Single', 'Double', 'Triple', 'Quad')),
+               capacity          INT          NOT NULL CHECK (capacity > 0),
+               current_occupancy INT          DEFAULT 0 CHECK (current_occupancy >= 0),
+               total_beds        INT          DEFAULT 0 CHECK (total_beds >= 0),
+               status            VARCHAR(20)  CHECK (status IN ('Available', 'Occupied', 'Maintenance', 'Reserved')) DEFAULT 'Available',
+               rent_amount       DECIMAL(10,2) DEFAULT 0,
+               is_active         BOOLEAN      DEFAULT TRUE,
+               created_date      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+               updated_date      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+               deleted           BOOLEAN      DEFAULT NULL,
+               remarks           TEXT         DEFAULT NULL,
+               UNIQUE(hostel_id, room_number)
+           )';
+
+--hostel_beds
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_beds(
+  bed_id         SERIAL PRIMARY KEY,
+      room_id        INT         NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE CASCADE,
+      bed_number     VARCHAR(10) NOT NULL,
+      bed_label      VARCHAR(5)  NOT NULL,
+      status         VARCHAR(20) CHECK (status IN ('Available', 'Occupied', 'Reserved', 'Maintenance')) DEFAULT 'Available',
+      student_id     INT         DEFAULT NULL,
+      allocated_date DATE        DEFAULT NULL,
+      created_date   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+      updated_date   TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+      deleted        BOOLEAN     DEFAULT NULL,
+      UNIQUE(room_id, bed_number)
+  )';
+
+--hostel_fees
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_fees(
+ fee_id            SERIAL PRIMARY KEY,
+    hostel_id         INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+    room_type         VARCHAR(20)   NOT NULL CHECK (room_type IN ('Single', 'Double', 'Triple', 'Quad')),
+    monthly_fee       DECIMAL(10,2) DEFAULT 0 CHECK (monthly_fee >= 0),
+    security_deposit  DECIMAL(10,2) DEFAULT 0 CHECK (security_deposit >= 0),
+    admission_fee     DECIMAL(10,2) DEFAULT 0 CHECK (admission_fee >= 0),
+    created_date      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_date      TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted           BOOLEAN       DEFAULT NULL,
+    school_id         INT           NOT NULL,
+    session_id        INT           NOT NULL,
+    CONSTRAINT unique_hostel_fees_per_school_session UNIQUE (school_id, session_id, hostel_id, room_type)
+)';
+--hostel allocations
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_allocations(
+allocation_id                  SERIAL PRIMARY KEY,
+    student_id                     INT           NOT NULL,
+    hostel_id                      INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE RESTRICT,
+    room_id                        INT           NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE RESTRICT,
+    bed_id                         INT           NOT NULL REFERENCES hostel_beds(bed_id) ON DELETE RESTRICT,
+    hostel_name_snapshot           VARCHAR(100)  NOT NULL,
+    room_no_snapshot               VARCHAR(20)   NOT NULL,
+    bed_no_snapshot                VARCHAR(10)   NOT NULL,
+    monthly_fee_snapshot           DECIMAL(10,2) DEFAULT 0 CHECK (monthly_fee_snapshot >= 0),
+    current_hostel_name            VARCHAR(100)  NOT NULL,
+    current_room_no                VARCHAR(20)   NOT NULL,
+    current_bed_no                 VARCHAR(10)   NOT NULL,
+    current_monthly_fee            DECIMAL(10,2) DEFAULT 0 CHECK (current_monthly_fee >= 0),
+    allocation_date                DATE          DEFAULT CURRENT_DATE,
+    vacate_date                    DATE          DEFAULT NULL,
+    vacate_reason                  TEXT          DEFAULT NULL,
+    refund_status                  VARCHAR(30)   CHECK (refund_status IN ('Pending', 'Refunded', 'Adjusted against Dues', 'Forfeited', 'Not Applicable')) DEFAULT 'Pending',
+    refund_amount                  DECIMAL(10,2) DEFAULT 0 CHECK (refund_amount >= 0),
+    vacate_remarks                 TEXT          DEFAULT NULL,
+    vacated_by                     INT           DEFAULT NULL,
+    inspection_done                BOOLEAN       DEFAULT FALSE,
+    inspection_remarks             TEXT          DEFAULT NULL,
+    transferred_to_allocation_id   INT           DEFAULT NULL,
+    transferred_from_allocation_id INT           DEFAULT NULL,
+    transfer_date                  DATE          DEFAULT NULL,
+    transfer_reason                TEXT          DEFAULT NULL,
+    previous_hostel_id             INT           DEFAULT NULL,
+    previous_room_id               INT           DEFAULT NULL,
+    previous_bed_id                INT           DEFAULT NULL,
+    previous_hostel_name           VARCHAR(100)  DEFAULT NULL,
+    previous_room_no               VARCHAR(20)   DEFAULT NULL,
+    previous_bed_no                VARCHAR(10)   DEFAULT NULL,
+    status                         VARCHAR(20)   CHECK (status IN ('Active', 'Vacated', 'Transferred', 'Expelled')) DEFAULT 'Active',
+    remarks                        TEXT          DEFAULT NULL,
+    created_date                   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_date                   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted                        BOOLEAN       DEFAULT NULL,
+    CONSTRAINT fk_allocation_hostel  FOREIGN KEY (hostel_id)  REFERENCES hostel(hostel_id),
+    CONSTRAINT fk_allocation_room    FOREIGN KEY (room_id)    REFERENCES hostel_rooms(room_id),
+    CONSTRAINT fk_allocation_bed     FOREIGN KEY (bed_id)     REFERENCES hostel_beds(bed_id),
+    CONSTRAINT fk_transfer_to        FOREIGN KEY (transferred_to_allocation_id)   REFERENCES hostel_allocations(allocation_id),
+    CONSTRAINT fk_transfer_from      FOREIGN KEY (transferred_from_allocation_id) REFERENCES hostel_allocations(allocation_id),
+    CONSTRAINT fk_previous_hostel    FOREIGN KEY (previous_hostel_id) REFERENCES hostel(hostel_id),
+    CONSTRAINT fk_previous_room      FOREIGN KEY (previous_room_id)   REFERENCES hostel_rooms(room_id),
+    CONSTRAINT fk_previous_bed       FOREIGN KEY (previous_bed_id)    REFERENCES hostel_beds(bed_id)
+)';
+
+--hostel maintenance
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_maintenance(
+maintenance_id             SERIAL PRIMARY KEY,
+    hostel_id                  INT           NOT NULL REFERENCES hostel(hostel_id) ON DELETE CASCADE,
+    room_id                    INT           NOT NULL REFERENCES hostel_rooms(room_id) ON DELETE CASCADE,
+    hostel_name                VARCHAR(100)  NOT NULL,
+    room_no                    VARCHAR(20)   NOT NULL,
+    issue_type                 VARCHAR(50)   NOT NULL CHECK (issue_type IN ('Plumbing', 'Electrical', 'AC', 'Furniture', 'Cleaning', 'Painting', 'Structural', 'Other')),
+    priority                   VARCHAR(20)   NOT NULL CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')) DEFAULT 'Medium',
+    description                TEXT          NOT NULL,
+    status                     VARCHAR(30)   CHECK (status IN ('Pending', 'In Progress', 'Completed', 'Cancelled', 'On Hold')) DEFAULT 'Pending',
+    assigned_to                INT           DEFAULT NULL,
+    assigned_to_name           VARCHAR(100)  DEFAULT NULL,
+    assigned_date              DATE          DEFAULT NULL,
+    estimated_completion_date  DATE          DEFAULT NULL,
+    actual_completion_date     DATE          DEFAULT NULL,
+    completion_remarks         TEXT          DEFAULT NULL,
+    completed_by               INT           DEFAULT NULL,
+    completed_by_name          VARCHAR(100)  DEFAULT NULL,
+    estimated_cost             DECIMAL(10,2) DEFAULT 0 CHECK (estimated_cost >= 0),
+    actual_cost                DECIMAL(10,2) DEFAULT 0 CHECK (actual_cost >= 0),
+    feedback                   TEXT          DEFAULT NULL,
+    rating                     INT           DEFAULT NULL CHECK (rating >= 1 AND rating <= 5),
+    requested_by               INT           DEFAULT NULL,
+    requested_by_name          VARCHAR(100)  DEFAULT NULL,
+    contact_number             VARCHAR(20)   DEFAULT NULL,
+    created_date               TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_date               TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    deleted                    BOOLEAN       DEFAULT NULL,
+    CONSTRAINT fk_maintenance_hostel FOREIGN KEY (hostel_id) REFERENCES hostel(hostel_id),
+    CONSTRAINT fk_maintenance_room   FOREIGN KEY (room_id)   REFERENCES hostel_rooms(room_id)
+)';
+
+--hostel visitors log
+EXECUTE 'CREATE TABLE IF NOT EXISTS' || quote_ident(schema_name) || '.hostel_visitors_log(
+visitor_log_id             SERIAL PRIMARY KEY,
+    visitor_name               VARCHAR(100) NOT NULL,
+    visitor_phone              VARCHAR(20)  NOT NULL,
+    visitor_email              VARCHAR(100) DEFAULT NULL,
+    visitor_id_card_type       VARCHAR(30)  DEFAULT NULL CHECK (visitor_id_card_type IN ('Aadhar', 'Driving License', 'Passport', 'Voter ID', 'Other')),
+    visitor_id_card_number     VARCHAR(50)  DEFAULT NULL,
+    visitor_photo_url          TEXT         DEFAULT NULL,
+    student_id                 INT          NOT NULL,
+    student_name               VARCHAR(100) NOT NULL,
+    student_room_no            VARCHAR(20)  DEFAULT NULL,
+    relation                   VARCHAR(30)  NOT NULL CHECK (relation IN ('Parent', 'Relative', 'Guardian', 'Vendor/Service', 'Friend', 'Other')) DEFAULT 'Parent',
+    purpose                    TEXT         NOT NULL,
+    check_in_time              TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    check_out_time             TIMESTAMP    DEFAULT NULL,
+    expected_duration_minutes  INT          DEFAULT 30,
+    approved_by                INT          DEFAULT NULL,
+    approved_by_name           VARCHAR(100) DEFAULT NULL,
+    approval_time              TIMESTAMP    DEFAULT NULL,
+    approval_remarks           TEXT         DEFAULT NULL,
+    id_verified                BOOLEAN      DEFAULT FALSE,
+    belongings_declared        TEXT         DEFAULT NULL,
+    security_remarks           TEXT         DEFAULT NULL,
+    status                     VARCHAR(20)  CHECK (status IN ('Inside', 'Checked Out', 'Expired', 'Cancelled')) DEFAULT 'Inside',
+    vehicle_number             VARCHAR(20)  DEFAULT NULL,
+    total_persons              INT          DEFAULT 1 CHECK (total_persons >= 1),
+    created_date               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_date               TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    created_by                 INT          DEFAULT NULL,
+    deleted                    BOOLEAN      DEFAULT NULL,
+    CONSTRAINT fk_visitor_student FOREIGN KEY (student_id) REFERENCES student_personal_details(student_id) ON DELETE RESTRICT
+)';
+
+
 
        -- 6. exam_subjects
        EXECUTE 'CREATE TABLE IF NOT EXISTS ' || quote_ident(schema_name) || '.exam_subjects (
