@@ -22,6 +22,10 @@ public class AddVehicleDetails {
     private Date registrationDate;
     private Date fitnessExpiry;
     private String status;
+    private String driverName;
+    private String routeName;
+
+
 
 
     // getters & setters for all 6
@@ -42,6 +46,23 @@ public class AddVehicleDetails {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public String getRouteName() {
+        return routeName;
+    }
+
+    public void setRouteName(String routeName) {
+        this.routeName = routeName;
+    }
 
 
 

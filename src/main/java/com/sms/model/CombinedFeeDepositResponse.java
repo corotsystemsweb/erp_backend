@@ -8,4 +8,6 @@ import java.util.List;
 public class CombinedFeeDepositResponse {
     private List<FeeDepositDetails> academicFeeDetails;
     private List<TransportFeeDepositDetails> transportFeeDetails;
+
+    private Integer tfdId;
 }
